@@ -44,7 +44,10 @@ def cmd_run(args) -> int:
     cfg = _cfg.load()
     i18n.set_language(cfg["ui"].get("lang") or None)
 
-    if not _cfg.has_chat_creds(cfg) and cfg["stt"]["provider"] != "local":
+    has_chat = _cfg.has_chat_creds(cfg)
+    has_stt = _cfg.has_stt_creds(cfg) or cfg["stt"]["provider"] == "local"
+
+    if not has_chat and not has_stt and not _cfg.config_path().exists():
         print(f"\n  {BYEL}!{RST} no config — run `interview-assistant init` first\n")
         return 1
 
@@ -72,7 +75,10 @@ def cmd_run(args) -> int:
 
     qhint_secs, qhint_embs = rag.build_qhint_index(sections, embedder)
     print(f"{DIM}  {i18n.t('run.recall_idx', n=len(qhint_secs))}{RST}")
-    print(f"{DIM}  {i18n.t('run.llm_backend', model=cfg['chat']['model'])}{RST}")
+    if has_chat:
+        print(f"{DIM}  {i18n.t('run.llm_backend', model=cfg['chat']['model'])}{RST}")
+    else:
+        print(f"{DIM}  {i18n.t('run.mode_recall_only')}{RST}")
 
     # Skills
     skills = _skills.discover(cfg["skills"]["search_paths"])

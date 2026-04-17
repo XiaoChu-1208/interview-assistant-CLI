@@ -71,6 +71,47 @@ def render_tree(tree_text: str) -> str:
     return "\n".join(out)
 
 
+def chat_enabled(cfg: dict) -> bool:
+    """`chat.enabled` defaults to True if an api_key exists; explicit False wins."""
+    chat = cfg.get("chat", {}) or {}
+    if chat.get("enabled") is False:
+        return False
+    return bool(chat.get("api_key"))
+
+
+def _print_recall_hit(sec: dict) -> str:
+    print(f"\n{BGRN}{B}  {sec['title']}{RST}")
+    if sec.get("tree_text"):
+        print(render_tree(sec["tree_text"]))
+    if sec.get("answer_text"):
+        for line in sec["answer_text"].splitlines():
+            print(f"  {line}")
+    print()
+    return sec.get("answer_text", "")
+
+
+def _print_retrieval_only(results: list, top_k: int = 3) -> str:
+    """No-LLM fallback: dump the top-k retrieved sections themselves."""
+    if not results:
+        print(f"  {DIM}{i18n.t('run.no_relevant_doc')}{RST}\n")
+        return ""
+    print()
+    parts: list[str] = []
+    for i, (score, sec) in enumerate(results[:top_k], 1):
+        print(f"  {BGRN}{B}{i}. {sec['title']}{RST}  {DIM}(score {score:.2f}){RST}")
+        if sec.get("tree_text"):
+            print(render_tree(sec["tree_text"]))
+        if sec.get("answer_text"):
+            for line in sec["answer_text"].splitlines():
+                print(f"  {line}")
+        else:
+            for line in sec["content"].splitlines()[:8]:
+                print(f"  {line}")
+        print()
+        parts.append(sec.get("answer_text") or sec["content"])
+    return "\n\n---\n\n".join(parts)
+
+
 def handle_question(
     query: str,
     sections: list[dict],
@@ -84,7 +125,13 @@ def handle_question(
     chat_history: list | None = None,
     system_prompt: str = SYSTEM_PROMPT_BASE,
 ) -> tuple[str, str]:
-    """Answer a single question. Returns (used_query, full_answer_text)."""
+    """Answer a single question. Returns (used_query, full_answer_text).
+
+    Three execution paths:
+      1. Instant recall hit  → print stored answer (LLM never touched).
+      2. chat disabled        → print top-3 retrieved sections (retrieval-only).
+      3. chat enabled         → stream LLM grounded on retrieved context.
+    """
     if not sections:
         print(f"  {DIM}{i18n.t('run.no_relevant_doc')}{RST}\n")
         return query, ""
@@ -96,16 +143,20 @@ def handle_question(
 
     results = rag.search_documents(query, sections, bm25_index, embedder, doc_embeddings, top_k=6)
 
-    if instant and instant[0] >= INSTANT_RECALL_QHINT_SIM_MIN and results and results[0][0] >= INSTANT_RECALL_SCORE_THRESHOLD:
-        sec = instant[1]
-        print(f"\n{BGRN}{B}  {sec['title']}{RST}")
-        if sec.get("tree_text"):
-            print(render_tree(sec["tree_text"]))
-        if sec.get("answer_text"):
-            for line in sec["answer_text"].splitlines():
-                print(f"  {line}")
-        print()
-        return query, sec.get("answer_text", "")
+    use_llm = chat_enabled(cfg)
+    # In retrieval-only mode (no LLM), be a bit more generous about what
+    # counts as a recall hit — there's no other path to a useful answer.
+    score_floor = INSTANT_RECALL_SCORE_THRESHOLD if use_llm else INSTANT_RECALL_SCORE_THRESHOLD * 0.5
+    if (
+        instant
+        and instant[0] >= INSTANT_RECALL_QHINT_SIM_MIN
+        and results
+        and results[0][0] >= score_floor
+    ):
+        return query, _print_recall_hit(instant[1])
+
+    if not use_llm:
+        return query, _print_retrieval_only(results, top_k=3)
 
     if not results:
         print(f"  {DIM}{i18n.t('run.no_relevant_doc')}{RST}\n")
@@ -132,8 +183,7 @@ def handle_question(
         print("\n")
     except Exception as e:
         print(f"\n{BRED}  llm error: {e}{RST}\n")
-        # Degraded mode: print top retrieved sections as a plain fallback.
-        for score, sec in results[:3]:
-            print(f"  {DIM}{sec['title']}{RST}\n  {sec['content'][:300]}...\n")
+        # Final degraded mode: print top retrieved sections as plain fallback.
+        return query, _print_retrieval_only(results, top_k=3)
 
     return query, "".join(full_text)

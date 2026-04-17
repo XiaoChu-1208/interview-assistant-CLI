@@ -13,7 +13,7 @@ import subprocess
 import sys
 from typing import Callable
 
-from . import audio_backend, config as _cfg, i18n, providers
+from . import audio_backend, config as _cfg, i18n, network, providers
 from .theme import BGRN, BRED, BYEL, DIM, RST, B
 
 
@@ -112,6 +112,30 @@ def _check_chat_api(cfg: dict) -> tuple[str, str] | None:
     return _emit(WARN, i18n.t("doctor.api_fail", provider=chat["base_url"], err=err[:120]))
 
 
+def _check_network(cfg: dict) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    proxy = cfg.get("chat", {}).get("http_proxy", "")
+    inet = network.probe(network.PROBE_URLS["internet"], proxy=proxy)
+    if inet.ok:
+        out.append(_emit(CHECK, f"internet reachable ({inet.elapsed_ms}ms)"))
+    else:
+        out.append(_emit(WARN, f"internet unreachable: {inet.error[:80]}"))
+    base = cfg.get("chat", {}).get("base_url", "")
+    if base:
+        target = "groq" if "groq" in base else "openai" if "openai" in base else "internet"
+        tgt = network.probe(network.PROBE_URLS[target], proxy=proxy)
+        if tgt.ok:
+            out.append(_emit(CHECK, f"{target} reachable ({tgt.elapsed_ms}ms)"))
+        else:
+            out.append(_emit(WARN, f"{target} unreachable: {tgt.error[:80]}"))
+    sysp = network.detect_system_proxy()
+    if sysp:
+        out.append(_emit(CHECK, f"system proxy detected: {sysp}"))
+    elif proxy:
+        out.append(_emit(CHECK, f"configured proxy: {proxy}"))
+    return out
+
+
 def run(cfg: dict | None = None, *, autofix: bool = False) -> list[tuple[str, str]]:
     """Run all checks. Returns the (status, message) tuples emitted."""
     if cfg is None:
@@ -139,6 +163,9 @@ def run(cfg: dict | None = None, *, autofix: bool = False) -> list[tuple[str, st
 
     print(f"\n  {DIM}— config —{RST}")
     out.append(_check_config(cfg))
+
+    print(f"\n  {DIM}— network —{RST}")
+    out.extend(_check_network(cfg))
 
     api = _check_chat_api(cfg)
     if api:

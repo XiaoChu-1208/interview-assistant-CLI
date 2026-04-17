@@ -4,14 +4,18 @@
 
 简体中文 · [English](./README.md)
 
-一个跑在终端里的实时面试副驾。它通过系统音监听面试官的问题、通过 Push-to-Talk 录入你想自查的句子，自动转写后在你的本地 Markdown 知识库里做混合检索（BM25 + 嵌入），再调用任意 OpenAI 兼容大模型生成简洁的回答建议。
+一个跑在终端里的实时面试副驾。它通过系统音监听面试官的问题、通过 Push-to-Talk 录入你想自查的句子，自动转写后在你的本地 Markdown 知识库里做混合检索（BM25 + 嵌入）。
 
-知识库 **100% 本地存放**。离线模式 **完全不需要任何 API key**。
+**核心功能是 *instant recall***：当检索到的 Q&A 命中度高时，助手直接打印**你自己预先写好的答案**——可预测、无 LLM 幻觉、几乎零延迟。整个工具可以这样跑：只接 STT，不需要任何 chat-LLM key。
+
+如果你希望"没命中时也能让 LLM 帮你生成"，再接任意 OpenAI 兼容 endpoint（Groq / OpenAI / DeepSeek / OpenRouter / 本地 vLLM…）即可。知识库 **100% 本地存放**。离线模式 **完全不需要任何 API key**。
 
 ---
 
 ## 特性
 
+- **Instant recall 作为一等模式**：可以完全关掉 chat-LLM，助手直接命中你写好的答案，无幻觉、无 per-token 成本。
+- **网络感知的 onboarding**：在国内 / 公司网络里 Groq、OpenAI 不通时，`init` 会自动嗅探本地 Clash/Surge/V2RayN 代理，或一步步引导你粘贴代理地址。
 - **实时语音识别**：Groq Whisper（免费版无需信用卡）或本地 `faster-whisper`（完全离线）。
 - **混合 RAG**：在你自己的 Markdown 知识库上跑 BM25 + 嵌入向量检索，问题级别的 instant recall。
 - **Push-to-Talk**：默认按住右 Option（`⌥`）录音，可改 F8 / 右 Cmd / Ctrl / F5。
@@ -71,12 +75,17 @@ interview-assistant init
 向导会引导你：
 
 1. **选语言** —— 中文 或 English。
-2. **选模式** —— A) 在线全功能（Groq，推荐）；B) 自带 OpenAI 兼容 key；C) 完全离线。
+2. **选模式**：
+   - **A) 仅 Instant-recall** *（如果你已经写好答案，强烈推荐）* —— 只跑 Whisper + 本地 Q&A 检索，全程不调 chat-LLM。只需要一个 Groq Whisper key，或本地 Whisper。
+   - **B) 在线全功能** —— Groq Whisper + Groq Llama-3.3（免费版）。
+   - **C) 自带 chat key** —— 任意 OpenAI 兼容 endpoint。
+   - **D) 完全离线** —— 本地 Whisper，零云端。
 3. **环境自检 + 自动修复** —— 缺音频后端、缺系统包、缺权限，能自动的就自动。
-4. **配置 chat 模型** —— endpoint + key + model + 连通性测试。
-5. **拷贝示例知识库** 到 `./knowledge/00_starter.md`。
-6. **安装两个 skill** 到你的编辑器（Cursor / Claude Code / Codex），默认项目级。
-7. **检测音频设备**。
+4. **网络检测 + 代理自动嗅探** —— 在国内/公司网络下如果 Groq/OpenAI 不通，向导会扫本地代理（Clash 7890、Surge 6152、V2RayN 10809…）、读系统代理设置，必要时引导你粘贴代理地址。
+5. **配置 STT / chat** —— key、模型、连通性测试。
+6. **拷贝示例知识库** 到 `./knowledge/00_starter.md`。
+7. **安装两个 skill** 到你的编辑器（Cursor / Claude Code / Codex），默认项目级。
+8. **检测音频设备**。
 
 之后：
 

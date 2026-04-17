@@ -20,9 +20,14 @@ init:
   welcome: "欢迎使用 Interview Assistant"
   welcome_sub: "5 分钟带你走完全部配置。"
   step_mode: "第 1 步 — 选择运行模式"
-  mode_a: "A) 在线全功能（Groq，推荐 —— 1 分钟注册，无需信用卡）"
-  mode_b: "B) 自带 API key（OpenAI / DeepSeek / OpenRouter / 任意 OpenAI 兼容）"
-  mode_c: "C) 完全离线（本地 Whisper + 关键词召回，不调云端 LLM）"
+  mode_recall: "A) 仅 instant-recall（Whisper 转写 + 你本地预设的 Q&A，不调任何 chat LLM —— 已经写好答案的强烈推荐）"
+  mode_groq: "B) 在线全功能 Groq（Whisper + Llama-3.3，免费版无需信用卡）"
+  mode_byo: "C) 自带 chat API key（OpenAI / DeepSeek / OpenRouter / 任意 OpenAI 兼容）"
+  mode_offline: "D) 完全离线（本地 Whisper，不调任何云端 LLM）"
+  mode_recall_explain: |
+    Instant-recall 模式：转写面试官 → 检索本地知识库 → 直接打印你写好的答案。
+    全程不会调用 chat LLM。更便宜、更快、完全可预测 ——
+    只需要一个 Groq Whisper key（或本地 Whisper）就能跑。
   step_doctor: "第 2 步 — 环境自检"
   step_chat: "第 3 步 — 配置对话模型"
   step_stt: "第 4 步 — 语音识别"
@@ -48,6 +53,27 @@ init:
 
     然后运行 `interview-assistant` 启动实时助手。
   groq_url: "去拿 Groq API key（免费、无需信用卡）：https://console.groq.com/keys"
+  net_probe_internet: "检测公网连通性..."
+  net_probe_target: "检测 {provider} 是否可达..."
+  net_ok: "OK ({ms}ms)"
+  net_fail: "不通 ({err})"
+  net_blocked_intro: |
+    当前网络无法直连 {provider}。在中国大陆 / 部分公司网络下这是正常的。
+    我们可以让请求走本地 HTTP 代理。
+  net_proxy_detected_system: "检测到系统代理：{proxy}"
+  net_proxy_detected_scan: "扫描到本地正在监听的代理端口："
+  net_proxy_try: "试试 {proxy}？"
+  net_proxy_ok: "代理可用，已写入配置。"
+  net_proxy_bad: "这个代理转不出去 —— 换一个。"
+  net_proxy_manual: "输入代理 URL（例如 http://127.0.0.1:7890），留空跳过"
+  net_proxy_help: |
+    如果你电脑上挂了 VPN 客户端，一般已经有本地代理：
+      Clash / Clash Verge          http://127.0.0.1:7890
+      Surge                        http://127.0.0.1:6152
+      V2RayN                       http://127.0.0.1:10809
+      Stash                        http://127.0.0.1:7777
+    打开 VPN 客户端的设置，找『HTTP 代理』或『允许局域网连接』。
+    如果完全没有代理，跳过这步，改用离线模式（D）或 instant-recall 模式（A）。
   enter_groq_key: "粘贴 Groq API key（sk-...）"
   enter_chat_endpoint: "Chat endpoint base URL"
   enter_chat_key: "Chat API key"
@@ -98,6 +124,7 @@ run:
   embed_degraded: "降级（仅 BM25 —— {err}）"
   recall_idx: "Instant recall 索引：{n} 个 Q&A"
   llm_backend: "LLM 后端：{model}"
+  mode_recall_only: "模式：仅 instant-recall（不调 chat LLM）"
   audio_sys: "系统音设备：{name} (id:{id})"
   audio_sys_none: "未找到系统音设备。装 BlackHole / WASAPI loopback。"
   audio_mic: "麦克风：{name} (id:{id})"

@@ -6,7 +6,7 @@ import shutil
 from copy import deepcopy
 from pathlib import Path
 
-from . import audio_backend, config as _cfg, doctor, i18n, providers, skills as _skills
+from . import audio_backend, config as _cfg, doctor, i18n, network, providers, skills as _skills
 from .theme import B, BCYN, BG_236, BGRN, BRED, BYEL, BWHT, DIM, RST, SAND, WARM
 
 
@@ -101,23 +101,93 @@ def _step_language() -> str:
 
 
 def _step_mode() -> str:
+    """Returns one of: 'recall' | 'groq' | 'byo' | 'offline'."""
+    print(f"\n  {DIM}{i18n.t('init.mode_recall_explain').strip()}{RST}")
     return _ask_choice(i18n.t("init.step_mode"), [
-        ("a", i18n.t("init.mode_a")),
-        ("b", i18n.t("init.mode_b")),
-        ("c", i18n.t("init.mode_c")),
+        ("recall",  i18n.t("init.mode_recall")),
+        ("groq",    i18n.t("init.mode_groq")),
+        ("byo",     i18n.t("init.mode_byo")),
+        ("offline", i18n.t("init.mode_offline")),
     ], default=0)
+
+
+def _step_network_check(target: str) -> str:
+    """Probe connectivity to `target` (preset key like 'groq' / 'openai').
+
+    Returns the proxy URL the user settled on (possibly empty if reachable
+    directly or if user skipped). Side-effects: prints status.
+    """
+    provider_label = target
+    print(f"\n  {DIM}{i18n.t('init.net_probe_internet')}{RST}", end=" ", flush=True)
+    inet = network.probe(network.PROBE_URLS["internet"])
+    if inet.ok:
+        print(f"{BGRN}{i18n.t('init.net_ok', ms=inet.elapsed_ms)}{RST}")
+    else:
+        print(f"{BRED}{i18n.t('init.net_fail', err=inet.error[:60])}{RST}")
+
+    print(f"  {DIM}{i18n.t('init.net_probe_target', provider=provider_label)}{RST}", end=" ", flush=True)
+    tgt = network.probe(network.PROBE_URLS.get(target, network.PROBE_URLS["groq"]))
+    if tgt.ok:
+        print(f"{BGRN}{i18n.t('init.net_ok', ms=tgt.elapsed_ms)}{RST}")
+        return ""
+
+    print(f"{BRED}{i18n.t('init.net_fail', err=tgt.error[:60])}{RST}")
+    print(f"\n  {BYEL}!{RST} {i18n.t('init.net_blocked_intro', provider=provider_label).strip()}\n")
+
+    candidates: list[str] = []
+    sysp = network.detect_system_proxy()
+    if sysp:
+        print(f"  {BCYN}→{RST} {i18n.t('init.net_proxy_detected_system', proxy=sysp)}")
+        candidates.append(sysp)
+    scanned = network.scan_local_proxy_ports()
+    if scanned:
+        print(f"  {BCYN}→{RST} {i18n.t('init.net_proxy_detected_scan')}")
+        for p in scanned:
+            print(f"      {p}")
+        for p in scanned:
+            if p not in candidates:
+                candidates.append(p)
+
+    for proxy in candidates:
+        if _ask_yn(i18n.t("init.net_proxy_try", proxy=proxy), default=True):
+            r = network.is_proxy_alive(proxy)
+            if r.ok:
+                print(f"  {BGRN}✓{RST} {i18n.t('init.net_proxy_ok')}")
+                return proxy
+            print(f"  {BYEL}!{RST} {i18n.t('init.net_proxy_bad')} ({r.error[:60]})")
+
+    print(f"\n  {DIM}{i18n.t('init.net_proxy_help').strip()}{RST}\n")
+    while True:
+        manual = _ask(i18n.t("init.net_proxy_manual"), "")
+        if not manual:
+            return ""
+        if not manual.startswith(("http://", "https://", "socks5://")):
+            manual = "http://" + manual
+        r = network.is_proxy_alive(manual)
+        if r.ok:
+            print(f"  {BGRN}✓{RST} {i18n.t('init.net_proxy_ok')}")
+            return manual
+        print(f"  {BYEL}!{RST} {i18n.t('init.net_proxy_bad')} ({r.error[:60]})")
 
 
 def _step_chat_provider(cfg: dict, mode: str) -> dict:
     """Configure [chat] section based on selected mode."""
     print(f"\n  {B}{i18n.t('init.step_chat')}{RST}")
-    if mode == "c":
+
+    if mode in ("recall", "offline"):
+        cfg["chat"]["enabled"] = False
+        cfg["chat"]["api_key"] = ""
         return cfg
 
-    if mode == "a":
+    cfg["chat"]["enabled"] = True
+
+    if mode == "groq":
         cfg["chat"]["base_url"] = providers.PRESETS["groq"]["base_url"]
         cfg["chat"]["model"] = providers.PRESETS["groq"]["model"]
         cfg["chat"]["fast_model"] = providers.PRESETS["groq"]["fast_model"]
+        proxy = _step_network_check("groq")
+        if proxy:
+            cfg["chat"]["http_proxy"] = proxy
         print(f"  {DIM}{i18n.t('init.groq_url')}{RST}")
         key = _ask(i18n.t("init.enter_chat_key"), secret=True)
         if key:
@@ -132,12 +202,18 @@ def _step_chat_provider(cfg: dict, mode: str) -> dict:
         cfg["chat"]["model"] = providers.PRESETS[choice]["model"]
         cfg["chat"]["fast_model"] = providers.PRESETS[choice]["fast_model"]
     cfg["chat"]["base_url"] = _ask(i18n.t("init.enter_chat_endpoint"), cfg["chat"]["base_url"])
+
+    target_key = "openai" if "openai" in cfg["chat"]["base_url"] else "groq" if "groq" in cfg["chat"]["base_url"] else "internet"
+    proxy = _step_network_check(target_key)
+    if proxy:
+        cfg["chat"]["http_proxy"] = proxy
+
     cfg["chat"]["api_key"] = _ask(i18n.t("init.enter_chat_key"), secret=True) or cfg["chat"]["api_key"]
     cfg["chat"]["model"] = _ask(i18n.t("init.enter_chat_model"), cfg["chat"]["model"])
     cfg["chat"]["fast_model"] = _ask(i18n.t("init.enter_fast_model"), cfg["chat"]["fast_model"])
 
     print(f"  {DIM}{i18n.t('init.test_connectivity')}{RST}")
-    ok, err = providers.ping(cfg["chat"]["base_url"], cfg["chat"]["api_key"], cfg["chat"]["fast_model"])
+    ok, err = providers.ping(cfg["chat"]["base_url"], cfg["chat"]["api_key"], cfg["chat"]["fast_model"], cfg["chat"].get("http_proxy", ""))
     if ok:
         print(f"  {BGRN}✓{RST} OK")
     else:
@@ -147,13 +223,36 @@ def _step_chat_provider(cfg: dict, mode: str) -> dict:
 
 def _step_stt(cfg: dict, mode: str) -> dict:
     print(f"\n  {B}{i18n.t('init.step_stt')}{RST}")
-    if mode == "c":
+    if mode == "offline":
         cfg["stt"]["provider"] = "local"
         cfg["stt"]["model"] = _ask("local model size (tiny/base/small/medium)", "small")
         return cfg
-    if mode in ("a",):
+
+    if mode == "recall":
+        sub = _ask_choice("STT for instant-recall mode", [
+            ("groq",  "Groq Whisper (free, no credit card)"),
+            ("local", "Local faster-whisper (fully offline)"),
+        ], default=0)
+        if sub == "local":
+            cfg["stt"]["provider"] = "local"
+            cfg["stt"]["model"] = _ask("local model size (tiny/base/small/medium)", "small")
+            return cfg
         cfg["stt"]["provider"] = "groq"
+        if not cfg["stt"].get("groq_api_key"):
+            proxy = _step_network_check("groq")
+            if proxy:
+                cfg["chat"]["http_proxy"] = proxy
+            print(f"  {DIM}{i18n.t('init.groq_url')}{RST}")
+            cfg["stt"]["groq_api_key"] = _ask(i18n.t("init.enter_groq_key"), secret=True)
         return cfg
+
+    if mode == "groq":
+        cfg["stt"]["provider"] = "groq"
+        # Reuse the same Groq key for STT if user already set chat.api_key
+        if not cfg["stt"].get("groq_api_key") and cfg["chat"].get("api_key"):
+            cfg["stt"]["groq_api_key"] = cfg["chat"]["api_key"]
+        return cfg
+
     cfg["stt"]["provider"] = _ask("STT provider (groq | deepgram | local)", "groq")
     if cfg["stt"]["provider"] == "groq" and not cfg["stt"].get("groq_api_key"):
         print(f"  {DIM}{i18n.t('init.groq_url')}{RST}")
@@ -276,7 +375,10 @@ def run() -> int:
     _step_audio_summary(cfg)
 
     saved = _cfg.save(cfg)
-    print(f"\n  {BGRN}✓{RST} {i18n.t('common.done')} → {saved}\n")
+    print(f"\n  {BGRN}✓{RST} {i18n.t('common.done')} → {saved}")
+    if not cfg["chat"].get("enabled"):
+        print(f"  {DIM}{i18n.t('run.mode_recall_only')}{RST}")
+    print()
     print(f"  {B}{i18n.t('init.done_quickstart_title')}{RST}\n")
     print(i18n.t("init.done_quickstart"))
     return 0

@@ -10,8 +10,30 @@ def test_import_all():
     from interview_assistant import (
         config, providers, stt_filter, homophones, skills,
         rag, qa, theme, i18n, knowledge_tools, doctor, cli, init_wizard,
+        network,
     )
     assert interview_assistant.__version__
+
+
+def test_chat_enabled_flag():
+    from interview_assistant import qa, config
+    cfg = {"chat": {"enabled": True, "api_key": "sk-x"}}
+    assert qa.chat_enabled(cfg)
+    cfg["chat"]["enabled"] = False
+    assert not qa.chat_enabled(cfg)
+    cfg = {"chat": {"api_key": ""}}
+    assert not qa.chat_enabled(cfg)
+    assert config.DEFAULTS["chat"]["enabled"] is True
+
+
+def test_network_module():
+    from interview_assistant import network
+    assert hasattr(network, "PROBE_URLS")
+    assert "groq" in network.PROBE_URLS
+    sysp = network.detect_system_proxy()
+    assert isinstance(sysp, str)
+    found = network.scan_local_proxy_ports()
+    assert isinstance(found, list)
 
 
 def test_i18n_zh_en():

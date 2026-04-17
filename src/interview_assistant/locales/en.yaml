@@ -20,9 +20,15 @@ init:
   welcome: "Welcome to Interview Assistant"
   welcome_sub: "Let's get you set up in under 5 minutes."
   step_mode: "Step 1 — Pick a mode"
-  mode_a: "A) Online (Groq, recommended — 1-min sign-up, no credit card)"
-  mode_b: "B) Bring your own key (OpenAI / DeepSeek / OpenRouter / any OpenAI-compatible)"
-  mode_c: "C) Fully offline (local Whisper + keyword recall, no LLM)"
+  mode_recall: "A) Instant-recall only (Whisper STT + your local Q&A, NO chat LLM — recommended if you've prepared answers)"
+  mode_groq: "B) Full online with Groq (Whisper + Llama-3.3, free tier, no credit card)"
+  mode_byo: "C) Bring your own chat key (OpenAI / DeepSeek / OpenRouter / any OpenAI-compatible)"
+  mode_offline: "D) Fully offline (local Whisper, no LLM)"
+  mode_recall_explain: |
+    Instant-recall mode: the app transcribes the interviewer, retrieves the
+    closest entry from your knowledge base, and prints YOUR answer verbatim.
+    No chat-LLM call ever happens. Cheaper, faster, fully predictable —
+    you only need a Groq Whisper key (or local Whisper).
   step_doctor: "Step 2 — Environment check"
   step_chat: "Step 3 — Chat model"
   step_stt: "Step 4 — Speech-to-text"
@@ -49,6 +55,29 @@ init:
 
     Then run `interview-assistant` to start the live assistant.
   groq_url: "Get a Groq API key (free, no credit card): https://console.groq.com/keys"
+  net_probe_internet: "Checking general internet..."
+  net_probe_target: "Checking {provider} reachability..."
+  net_ok: "OK ({ms}ms)"
+  net_fail: "blocked ({err})"
+  net_blocked_intro: |
+    Cannot reach {provider} from this network. This is normal in mainland
+    China or behind some corporate firewalls. We can route through a local
+    HTTP proxy.
+  net_proxy_detected_system: "Detected system proxy: {proxy}"
+  net_proxy_detected_scan: "Detected listening proxy ports:"
+  net_proxy_try: "Try {proxy}?"
+  net_proxy_ok: "Proxy works. Saved to config."
+  net_proxy_bad: "That proxy didn't relay traffic — try another."
+  net_proxy_manual: "Enter proxy URL (e.g. http://127.0.0.1:7890), or blank to skip"
+  net_proxy_help: |
+    Most users on a VPN client already have a local proxy:
+      Clash / Clash Verge          http://127.0.0.1:7890
+      Surge                        http://127.0.0.1:6152
+      V2RayN                       http://127.0.0.1:10809
+      Stash                        http://127.0.0.1:7777
+    Open your VPN app's settings — look for "HTTP proxy" or "Allow LAN".
+    If you have no proxy at all, skip this step and pick offline mode (D)
+    or instant-recall mode (A).
   enter_groq_key: "Paste your Groq API key (sk-...)"
   enter_chat_endpoint: "Chat endpoint base URL"
   enter_chat_key: "Chat API key"
@@ -99,6 +128,7 @@ run:
   embed_degraded: "degraded (BM25 only — {err})"
   recall_idx: "Instant recall index: {n} Q&A entries"
   llm_backend: "LLM backend: {model}"
+  mode_recall_only: "Mode: instant-recall only (no chat LLM)"
   audio_sys: "System audio: {name} (id:{id})"
   audio_sys_none: "No system-audio device found. Install BlackHole / WASAPI loopback."
   audio_mic: "Microphone: {name} (id:{id})"

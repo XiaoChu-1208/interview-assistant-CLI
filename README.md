@@ -4,14 +4,18 @@
 
 [简体中文](./README.zh-CN.md) · English
 
-A terminal-native, real-time interview copilot. It captures the interviewer's voice from system audio (and your own via push-to-talk), transcribes via Groq Whisper (or local `faster-whisper`), runs hybrid retrieval (BM25 + embeddings) against your local Markdown knowledge base, and asks any OpenAI-compatible LLM for a concise reply.
+A terminal-native, real-time interview copilot. It captures the interviewer's voice from system audio (and your own via push-to-talk), transcribes via Groq Whisper (or local `faster-whisper`), runs hybrid retrieval (BM25 + embeddings) against your local Markdown knowledge base.
 
-Knowledge stays **100% local**. The offline mode needs **no API key at all**.
+The **core feature is *instant recall***: when the retrieved Q&A entry is a strong match, the assistant prints **your own pre-written answer verbatim** — predictable, no LLM hallucination, near-zero latency. You can run the entire app this way: STT only, no chat-LLM key needed.
+
+If you want generated answers when there's no exact match, plug in any OpenAI-compatible chat endpoint (Groq / OpenAI / DeepSeek / OpenRouter / vLLM…). Knowledge stays **100% local**. The offline mode needs **no API key at all**.
 
 ---
 
 ## Features
 
+- **Instant recall as a first-class mode**: turn off the chat-LLM entirely; the app retrieves the closest Q&A from your knowledge base and prints *your* answer. No hallucination risk, no per-question token cost.
+- **Network-aware onboarding**: if Groq/OpenAI is unreachable (mainland China / corporate firewall), `init` detects your local Clash/Surge/V2Ray proxy automatically, or hand-holds you into pasting one.
 - **Real-time STT**: Groq Whisper (free tier, no credit card) or local `faster-whisper` for fully-offline use.
 - **Hybrid RAG**: BM25 + dense embeddings on your own Markdown knowledge base, with instant recall via question-hint indexing.
 - **Push-to-talk**: hold Right Option (`⌥`, default) to record into your mic; configurable to F8 / Right Cmd / Ctrl / F5.
@@ -71,12 +75,17 @@ interview-assistant init
 The wizard will:
 
 1. **Ask your language** — 中文 or English.
-2. **Pick a mode** — A) online (Groq, recommended), B) bring-your-own key, C) fully offline.
-3. **Auto-detect environment issues** — missing audio backend, sudo packages, permissions; offers to fix what it can.
-4. **Set up the chat provider** — endpoint + key + model + connectivity test.
-5. **Drop a sample knowledge base** into `./knowledge/00_starter.md`.
-6. **Install the two skills** into your editor (Cursor / Claude Code / Codex), defaulting to project-level.
-7. **Verify audio devices**.
+2. **Pick a mode**:
+   - **A) Instant-recall only** *(recommended if you've prepped answers)* — Whisper STT + your local Q&A. NO chat-LLM call ever. You only need a Groq Whisper key, or run Whisper locally.
+   - **B) Online full** — Groq Whisper + Groq Llama-3.3 (free tier).
+   - **C) Bring-your-own key** — any OpenAI-compatible chat endpoint.
+   - **D) Fully offline** — local Whisper, no LLM.
+3. **Auto-detect environment issues** — missing audio backend, packages, permissions; offers to fix what it can.
+4. **Network check + proxy auto-detect** — if Groq/OpenAI is blocked from your network, the wizard scans for a local proxy (Clash 7890, Surge 6152, V2RayN 10809…), reads system proxy settings, and walks you through pasting one if needed.
+5. **Set up STT / chat** — keys, models, connectivity test.
+6. **Drop a sample knowledge base** into `./knowledge/00_starter.md`.
+7. **Install the two skills** into your editor (Cursor / Claude Code / Codex).
+8. **Verify audio devices**.
 
 Then:
 

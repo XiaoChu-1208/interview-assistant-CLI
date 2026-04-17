@@ -46,6 +46,7 @@ DEFAULTS: dict[str, Any] = {
         "deepgram_model": "nova-3",
     },
     "chat": {
+        "enabled": True,
         "base_url": "https://api.groq.com/openai/v1",
         "api_key": "",
         "model": "llama-3.3-70b-versatile",
@@ -153,7 +154,10 @@ def expanduser_paths(paths: list[str]) -> list[Path]:
 
 
 def has_chat_creds(cfg: dict) -> bool:
-    return bool(cfg.get("chat", {}).get("api_key"))
+    chat = cfg.get("chat", {})
+    if chat.get("enabled") is False:
+        return False
+    return bool(chat.get("api_key"))
 
 
 def has_stt_creds(cfg: dict) -> bool:
