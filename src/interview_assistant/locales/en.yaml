@@ -1,0 +1,148 @@
+app:
+  name: "Interview Assistant"
+  tagline: "real-time STT  ·  hybrid RAG  ·  v{version}"
+
+common:
+  yes: "y"
+  no: "n"
+  ok: "OK"
+  cancel: "cancel"
+  skip: "skip"
+  done: "done"
+  failed: "failed"
+  warn: "warning"
+  press_enter: "(press Enter to continue)"
+
+init:
+  language_prompt: "Choose language / 请选择语言:"
+  language_zh: "中文 (Chinese)"
+  language_en: "English"
+  welcome: "Welcome to Interview Assistant"
+  welcome_sub: "Let's get you set up in under 5 minutes."
+  step_mode: "Step 1 — Pick a mode"
+  mode_a: "A) Online (Groq, recommended — 1-min sign-up, no credit card)"
+  mode_b: "B) Bring your own key (OpenAI / DeepSeek / OpenRouter / any OpenAI-compatible)"
+  mode_c: "C) Fully offline (local Whisper + keyword recall, no LLM)"
+  step_doctor: "Step 2 — Environment check"
+  step_chat: "Step 3 — Chat model"
+  step_stt: "Step 4 — Speech-to-text"
+  step_kb: "Step 5 — Knowledge base"
+  step_skills: "Step 6 — Install skills"
+  step_audio: "Step 7 — Audio devices"
+  done_title: "All set."
+  done_quickstart_title: "Quick start"
+  done_quickstart: |
+    Your knowledge base only has the starter file right now. To add real content:
+
+      1. AI editor (recommended, fastest):
+         Open this folder in Cursor or Claude Code, drop your résumé into chat,
+         then say:
+           "Use the interview-knowledge-format skill. Turn this into Q&A files
+            under knowledge/."
+
+      2. CLI:
+         interview-assistant knowledge new        # interactive entry
+         interview-assistant knowledge ingest <file>   # PDF/DOCX/MD/TXT
+         interview-assistant knowledge validate
+
+      3. Hand-write — copy knowledge/00_starter.md as a template.
+
+    Then run `interview-assistant` to start the live assistant.
+  groq_url: "Get a Groq API key (free, no credit card): https://console.groq.com/keys"
+  enter_groq_key: "Paste your Groq API key (sk-...)"
+  enter_chat_endpoint: "Chat endpoint base URL"
+  enter_chat_key: "Chat API key"
+  enter_chat_model: "Chat model name"
+  enter_fast_model: "Fast/outline model name (smaller, cheaper)"
+  test_connectivity: "Testing connectivity..."
+  ptt_prompt: "Push-to-Talk hotkey"
+  ptt_alt_r: "Right Option ⌥ (default — Discord-style)"
+  ptt_f8: "F8 (no system conflicts)"
+  ptt_cmd_r: "Right Cmd"
+  ptt_ctrl_r: "Right Ctrl"
+  ptt_f5: "F5 (warning: triggers Siri on macOS)"
+  kb_existing: "Found {n} existing markdown file(s) in ./knowledge/."
+  kb_copy_starter: "Copy starter knowledge to ./knowledge/00_starter.md?"
+  skills_targets: "Where to install skills?"
+  skills_target_cursor_local: "Project-level Cursor (./.cursor/skills/) — recommended"
+  skills_target_cursor_user: "User-level Cursor (~/.cursor/skills/)"
+  skills_target_claude_local: "Project-level Claude Code (./.claude/skills/)"
+  skills_target_claude_user: "User-level Claude Code (~/.claude/skills/)"
+  skills_target_agents: "Append to ./AGENTS.md (Codex / generic)"
+
+doctor:
+  title: "Diagnostics"
+  python_ok: "Python {ver}"
+  python_old: "Python {ver} (need 3.10+)"
+  pkg_ok: "{name} installed"
+  pkg_missing: "{name} missing — install with: pip install {pkg}"
+  audio_loopback_ok: "system-audio loopback: {name}"
+  audio_loopback_none: "no system-audio loopback found"
+  audio_mic_ok: "microphone: {name}"
+  audio_mic_none: "no microphone found (PTT will be disabled)"
+  config_ok: "config: {path}"
+  config_missing: "no config — run `interview-assistant init`"
+  api_ok: "{provider} API reachable"
+  api_fail: "{provider} API unreachable: {err}"
+  fix_brew_blackhole: "macOS: install BlackHole — `brew install blackhole-2ch`"
+  fix_apt_portaudio: "Linux: install PortAudio — `sudo apt install portaudio19-dev libportaudio2`"
+  fix_macos_accessibility: "macOS: open Privacy → Accessibility and enable your terminal app"
+  autofix_run: "Auto-fix attempting: {cmd}"
+  autofix_done: "Auto-fix done"
+  autofix_failed: "Auto-fix failed: {err}"
+
+run:
+  loading_kb: "Loading knowledge base..."
+  loaded_kb: "{n} sections indexed"
+  loading_embed: "Loading embedding model..."
+  embed_ok: "ok ({n} vectors, dim={dim})"
+  embed_degraded: "degraded (BM25 only — {err})"
+  recall_idx: "Instant recall index: {n} Q&A entries"
+  llm_backend: "LLM backend: {model}"
+  audio_sys: "System audio: {name} (id:{id})"
+  audio_sys_none: "No system-audio device found. Install BlackHole / WASAPI loopback."
+  audio_mic: "Microphone: {name} (id:{id})"
+  audio_mic_none: "No microphone found. F5 push-to-talk disabled."
+  ptt_hint: "push-to-talk: hold {key} to record via mic"
+  hint_listen: "  listen    toggle system-audio listener (interviewer)"
+  hint_off: "  off       stop system-audio listener"
+  hint_search: "  /search   search documents"
+  hint_reload: "  /reload   reload knowledge base"
+  hint_quit: "  q         quit"
+  shutting_down: "shutting down..."
+  bye: "bye"
+  reloading: "reloading..."
+  no_results: "no results"
+  hallucination_filtered: "(hallucination filtered)"
+  filler_skipped: "(filler, skipped)"
+  empty_transcription: "(empty transcription)"
+  transcribing: "transcribing {dur}s ..."
+  listening: "listening..."
+  ptt_recording: "recording (PTT held)"
+  ptt_too_short: "(ptt too short, {dur}s)"
+  no_relevant_doc: "no directly relevant content in your knowledge base"
+
+knowledge:
+  starter_header: |
+    <!-- This is a starter knowledge base. Replace it with your own content. -->
+    <!-- See `interview-knowledge-format` skill for the expected format. -->
+  draft_header: |
+    <!-- DRAFT: please review and rename this file (drop the `draft_` prefix) before relying on it. -->
+    <!-- The LLM may have used `[需补充]` placeholders where source data was missing. -->
+  status_approved: "approved"
+  status_draft: "draft"
+  status_invalid: "invalid"
+  validate_ok: "{file}: OK"
+  validate_warn: "{file}: {n} warning(s)"
+  validate_err: "{file}: {n} error(s)"
+  ingest_estimating: "Estimating tokens..."
+  ingest_cost: "About {tokens} tokens (~{cost}); proceed?"
+  ingest_writing: "Writing to {path}"
+  hint_first_run: "(first-run hint, shown once)"
+
+skills:
+  installing: "Installing {name} → {path}"
+  installed: "{name} installed at {path}"
+  scan_ok: "runtime hook OK: {name} loaded {n} entries"
+  upgrade_available: "{name}: {old} → {new}"
+  uninstalled: "{name} removed from {path}"

@@ -1,0 +1,147 @@
+app:
+  name: "面试助手 Interview Assistant"
+  tagline: "实时转录  ·  混合 RAG  ·  v{version}"
+
+common:
+  yes: "y"
+  no: "n"
+  ok: "好"
+  cancel: "取消"
+  skip: "跳过"
+  done: "完成"
+  failed: "失败"
+  warn: "警告"
+  press_enter: "（回车继续）"
+
+init:
+  language_prompt: "Choose language / 请选择语言:"
+  language_zh: "中文 (Chinese)"
+  language_en: "English"
+  welcome: "欢迎使用 Interview Assistant"
+  welcome_sub: "5 分钟带你走完全部配置。"
+  step_mode: "第 1 步 — 选择运行模式"
+  mode_a: "A) 在线全功能（Groq，推荐 —— 1 分钟注册，无需信用卡）"
+  mode_b: "B) 自带 API key（OpenAI / DeepSeek / OpenRouter / 任意 OpenAI 兼容）"
+  mode_c: "C) 完全离线（本地 Whisper + 关键词召回，不调云端 LLM）"
+  step_doctor: "第 2 步 — 环境自检"
+  step_chat: "第 3 步 — 配置对话模型"
+  step_stt: "第 4 步 — 语音识别"
+  step_kb: "第 5 步 — 知识库"
+  step_skills: "第 6 步 — 安装 Skills"
+  step_audio: "第 7 步 — 音频设备"
+  done_title: "全部完成。"
+  done_quickstart_title: "下一步"
+  done_quickstart: |
+    你的知识库目前只有示例文件。要让助手真正帮到你，请按下面之一填充内容：
+
+      1. AI 编辑器（推荐，最快）：
+         在 Cursor 或 Claude Code 里打开本目录，把简历拖进对话，然后说：
+           "用 interview-knowledge-format skill，
+            按规范帮我整理 Q&A，写到 knowledge/ 下。"
+
+      2. 命令行：
+         interview-assistant knowledge new        # 一题一题问
+         interview-assistant knowledge ingest <文件>   # PDF/DOCX/MD/TXT
+         interview-assistant knowledge validate
+
+      3. 手写 —— 照 knowledge/00_starter.md 改。
+
+    然后运行 `interview-assistant` 启动实时助手。
+  groq_url: "去拿 Groq API key（免费、无需信用卡）：https://console.groq.com/keys"
+  enter_groq_key: "粘贴 Groq API key（sk-...）"
+  enter_chat_endpoint: "Chat endpoint base URL"
+  enter_chat_key: "Chat API key"
+  enter_chat_model: "Chat 模型名"
+  enter_fast_model: "Fast/outline 模型名（更小更便宜的那个）"
+  test_connectivity: "测试连通性..."
+  ptt_prompt: "Push-to-Talk 热键"
+  ptt_alt_r: "右 Option ⌥（默认 —— Discord 风格）"
+  ptt_f8: "F8（无系统冲突）"
+  ptt_cmd_r: "右 Cmd"
+  ptt_ctrl_r: "右 Ctrl"
+  ptt_f5: "F5（警告：macOS 上会触发 Siri）"
+  kb_existing: "在 ./knowledge/ 下找到 {n} 个 markdown 文件。"
+  kb_copy_starter: "把示例知识库拷到 ./knowledge/00_starter.md？"
+  skills_targets: "Skill 装到哪里？"
+  skills_target_cursor_local: "项目级 Cursor (./.cursor/skills/) —— 推荐"
+  skills_target_cursor_user: "用户级 Cursor (~/.cursor/skills/)"
+  skills_target_claude_local: "项目级 Claude Code (./.claude/skills/)"
+  skills_target_claude_user: "用户级 Claude Code (~/.claude/skills/)"
+  skills_target_agents: "追加到 ./AGENTS.md（Codex / 通用）"
+
+doctor:
+  title: "环境诊断"
+  python_ok: "Python {ver}"
+  python_old: "Python {ver}（需 3.10+）"
+  pkg_ok: "{name} 已安装"
+  pkg_missing: "{name} 缺失 —— 用 pip 安装：pip install {pkg}"
+  audio_loopback_ok: "系统音 loopback：{name}"
+  audio_loopback_none: "未找到系统音 loopback"
+  audio_mic_ok: "麦克风：{name}"
+  audio_mic_none: "未找到麦克风（PTT 将禁用）"
+  config_ok: "配置文件：{path}"
+  config_missing: "无配置 —— 跑一下 `interview-assistant init`"
+  api_ok: "{provider} API 可达"
+  api_fail: "{provider} API 不可达：{err}"
+  fix_brew_blackhole: "macOS：装 BlackHole —— `brew install blackhole-2ch`"
+  fix_apt_portaudio: "Linux：装 PortAudio —— `sudo apt install portaudio19-dev libportaudio2`"
+  fix_macos_accessibility: "macOS：打开 隐私 → 辅助功能 并启用你的终端 app"
+  autofix_run: "尝试自动修复：{cmd}"
+  autofix_done: "自动修复完成"
+  autofix_failed: "自动修复失败：{err}"
+
+run:
+  loading_kb: "加载知识库..."
+  loaded_kb: "已索引 {n} 个段落"
+  loading_embed: "加载嵌入模型..."
+  embed_ok: "好 ({n} 个向量, dim={dim})"
+  embed_degraded: "降级（仅 BM25 —— {err}）"
+  recall_idx: "Instant recall 索引：{n} 个 Q&A"
+  llm_backend: "LLM 后端：{model}"
+  audio_sys: "系统音设备：{name} (id:{id})"
+  audio_sys_none: "未找到系统音设备。装 BlackHole / WASAPI loopback。"
+  audio_mic: "麦克风：{name} (id:{id})"
+  audio_mic_none: "未找到麦克风。F5 push-to-talk 已禁用。"
+  ptt_hint: "push-to-talk：按住 {key} 录入麦克风"
+  hint_listen: "  listen    切换系统音监听（面试官侧）"
+  hint_off: "  off       停止系统音监听"
+  hint_search: "  /search   检索知识库"
+  hint_reload: "  /reload   重新加载知识库"
+  hint_quit: "  q         退出"
+  shutting_down: "正在退出..."
+  bye: "再见"
+  reloading: "重新加载中..."
+  no_results: "无结果"
+  hallucination_filtered: "(已过滤幻觉)"
+  filler_skipped: "(填充词，跳过)"
+  empty_transcription: "(空转写)"
+  transcribing: "转写中 {dur}s ..."
+  listening: "聆听中..."
+  ptt_recording: "录音中（按住 PTT）"
+  ptt_too_short: "(PTT 录音太短，{dur}s)"
+  no_relevant_doc: "知识库中没有直接相关的内容"
+
+knowledge:
+  starter_header: |
+    <!-- 这是一份示例知识库，请用你自己的内容替换。 -->
+    <!-- 见 `interview-knowledge-format` skill 了解期望格式。 -->
+  draft_header: |
+    <!-- DRAFT：请审阅后将文件名前缀 `draft_` 去掉再使用。 -->
+    <!-- LLM 在原文缺数据时可能用了 `[需补充]` 占位。 -->
+  status_approved: "已审"
+  status_draft: "草稿"
+  status_invalid: "无效"
+  validate_ok: "{file}: 通过"
+  validate_warn: "{file}: {n} 处警告"
+  validate_err: "{file}: {n} 处错误"
+  ingest_estimating: "估算 token 数..."
+  ingest_cost: "约 {tokens} tokens（~{cost}），继续？"
+  ingest_writing: "写入 {path}"
+  hint_first_run: "（首次提示，仅显示一次）"
+
+skills:
+  installing: "正在安装 {name} → {path}"
+  installed: "{name} 已安装到 {path}"
+  scan_ok: "runtime 钩子 OK：{name} 加载了 {n} 条"
+  upgrade_available: "{name}: {old} → {new}"
+  uninstalled: "已从 {path} 删除 {name}"

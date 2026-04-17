@@ -1,0 +1,79 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "interview-assistant"
+version = "0.1.0"
+description = "Real-time interview copilot. Hears the question, searches your local Markdown knowledge base, suggests a STAR-shaped answer in seconds."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "XiaoChu" }]
+keywords = [
+    "interview", "real-time-stt", "rag", "groq", "whisper",
+    "cli", "terminal", "cursor-skill", "claude-code-skill", "local-first",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+dependencies = [
+    "numpy<2.0",
+    "sounddevice>=0.4.6",
+    "httpx>=0.27.0",
+    "PyYAML>=6.0",
+    "tomli>=2.0; python_version<'3.11'",
+    "tomli-w>=1.0.0",
+    "platformdirs>=4.0",
+]
+
+[project.optional-dependencies]
+embed = ["fastembed>=0.3.0"]
+hotkey = ["pynput>=1.7.6"]
+windows = ["soundcard>=0.4.3", "colorama>=0.4.6"]
+offline = ["faster-whisper>=1.0.0"]
+ingest = ["pypdf>=4.0", "python-docx>=1.0", "tiktoken>=0.7"]
+all = [
+    "fastembed>=0.3.0",
+    "pynput>=1.7.6",
+    "faster-whisper>=1.0.0",
+    "pypdf>=4.0",
+    "python-docx>=1.0",
+    "tiktoken>=0.7",
+]
+
+[project.scripts]
+interview-assistant = "interview_assistant.cli:main"
+ia = "interview_assistant.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/XiaoChu-1208/interview-assistant-CLI"
+Repository = "https://github.com/XiaoChu-1208/interview-assistant-CLI"
+Issues = "https://github.com/XiaoChu-1208/interview-assistant-CLI/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/interview_assistant"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"skills" = "share/interview-assistant/skills"
+"templates" = "share/interview-assistant/templates"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "skills/",
+    "templates/",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE",
+]

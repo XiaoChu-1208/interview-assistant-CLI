@@ -1,0 +1,57 @@
+target = "hallucinations"
+
+[[entry]]
+text = "悠悠独播剧场"
+source = "Whisper streaming-platform residue"
+
+[[entry]]
+text = "悠悠獨播劇場"
+source = "Whisper streaming-platform residue (traditional)"
+
+[[entry]]
+text = "优优独播剧场"
+source = "Whisper streaming-platform residue"
+
+[[entry]]
+text = "本视频由"
+source = "Whisper Chinese platform residue"
+
+[[entry]]
+text = "本视频由提供"
+source = "Whisper Chinese platform residue"
+
+[[entry]]
+text = "字幕组"
+source = "Whisper fan-sub residue"
+
+[[entry]]
+text = "明镜火眼"
+source = "Whisper Chinese show residue"
+
+[[entry]]
+text = "感谢观看"
+source = "Whisper YouTube outro residue"
+
+[[entry]]
+text = "请订阅我们的频道"
+source = "Whisper YouTube outro residue"
+
+[[entry]]
+text = "Subtitles by the Amara.org community"
+source = "Whisper Amara.org residue"
+
+[[entry]]
+text = "Thanks for watching!"
+source = "Whisper YouTube outro residue"
+
+[[entry]]
+text = "請不吝點贊 訂閱 轉發 打賞支持明鏡與點點欄目"
+source = "Whisper Chinese show residue"
+
+[[entry]]
+text = "ご視聴ありがとうございました"
+source = "Whisper Japanese platform residue"
+
+[[entry]]
+text = "翻译字幕"
+source = "Whisper subtitle residue"

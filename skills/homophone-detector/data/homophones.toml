@@ -1,0 +1,87 @@
+target = "homophones"
+
+[[entry]]
+canonical = "rag"
+variants = ["lag", "rad", "rack", "raq", "iad"]
+note = "Retrieval-Augmented Generation"
+
+[[entry]]
+canonical = "dag"
+variants = ["dak", "tag", "dac"]
+note = "Directed Acyclic Graph (Airflow)"
+
+[[entry]]
+canonical = "kpi"
+variants = ["kbi", "kp i", "kp"]
+note = "Key Performance Indicator"
+
+[[entry]]
+canonical = "okr"
+variants = ["ocr", "o k r", "ocrr"]
+note = "Objectives and Key Results"
+
+[[entry]]
+canonical = "roi"
+variants = ["rai", "raw", "r o i"]
+note = "Return on Investment"
+
+[[entry]]
+canonical = "agent"
+variants = ["asian", "aegent", "aging"]
+note = "AI agent / autonomous workflow"
+
+[[entry]]
+canonical = "prompt"
+variants = ["promp", "promnt", "prom"]
+
+[[entry]]
+canonical = "embedding"
+variants = ["embeddings", "in bedding", "imbedding"]
+
+[[entry]]
+canonical = "fine-tuning"
+variants = ["fine tuning", "finetuning", "find tuning"]
+
+[[entry]]
+canonical = "hallucination"
+variants = ["halucination", "幻觉", "hallucinations"]
+
+[[entry]]
+canonical = "transformer"
+variants = ["trans former", "transfer"]
+
+[[entry]]
+canonical = "sql"
+variants = ["s q l", "sequel", "scull"]
+
+[[entry]]
+canonical = "etl"
+variants = ["e t l", "atl"]
+
+[[entry]]
+canonical = "nlp"
+variants = ["n l p", "nlb"]
+
+[[entry]]
+canonical = "ctr"
+variants = ["c t r", "ctl", "see tr"]
+note = "Click-Through Rate"
+
+[[entry]]
+canonical = "arpu"
+variants = ["arbu", "a r p u", "arpoo"]
+
+[[entry]]
+canonical = "aarrr"
+variants = ["ar", "aaar", "a a r r r"]
+note = "Pirate metrics"
+
+[[entry]]
+canonical = "工作流"
+variants = ["工作量", "工作的"]
+note = "workflow vs workload"
+
+[[entry]]
+canonical = "智能体"
+variants = ["智能题", "知能体"]
+note = "agent (Chinese)"
