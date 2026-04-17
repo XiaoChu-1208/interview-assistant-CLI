@@ -30,13 +30,11 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libportaudio2
 
       - name: Install package
-        working-directory: ship
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e . pytest
 
       - name: Smoke tests
-        working-directory: ship
         run: python -m pytest -q tests/
 
   build:
@@ -48,13 +46,11 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build
-        working-directory: ship
         run: |
           python -m pip install --upgrade pip build twine
           python -m build
           python -m twine check dist/*
       - name: Verify bundled assets land in wheel
-        working-directory: ship
         run: |
           python -c "import zipfile, glob; \
             w = glob.glob('dist/*.whl')[0]; \
@@ -72,5 +68,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: ship/dist/
+          path: dist/
           retention-days: 7
