@@ -1,0 +1,53 @@
+# Interview Assistant
+
+> A real-time interview copilot CLI that hears the interviewer's question and surfaces the answer the candidate already prepared, retrieved verbatim from a local Markdown knowledge base in milliseconds. Built around "instant recall" rather than LLM-generated answers, which the project argues is the only design that actually works in real interviews (latency, voice authenticity, no hallucination, no per-question cost).
+
+The project's distinguishing thesis: most other "AI interview helper" tools on GitHub pipe transcribed audio into GPT-4 / Claude and stream a freshly-generated answer back. This is the wrong design for live interviews because of (1) 2–6s first-token latency, (2) the LLM's voice doesn't match the candidate's, (3) hallucinated metrics/projects/dates the candidate cannot defend, and (4) per-question rate-limit / cost exposure. Interview Assistant inverts the design: the candidate prepares the answers in advance as a Markdown knowledge base, and the tool's only job is to retrieve the right one fast (BM25 + embedding hybrid retrieval, with an "instant Q-hint" path for verbatim hits).
+
+## Core docs
+
+- [README (English)](./README.md): full project description, "why this exists" comparison table, install steps, four onboarding modes, FAQ
+- [README (简体中文)](./README.zh-CN.md): Chinese translation of README
+- [pyproject.toml](./pyproject.toml): dependencies, entry points (`interview-assistant` and `ia`), optional extras (`embed`, `hotkey`, `windows`, `offline`, `ingest`, `all`)
+- [LICENSE](./LICENSE): MIT
+
+## Operating modes
+
+The `ia init` wizard offers four modes; users pick one based on whether they want chat-LLM generation as a fallback:
+
+- **Mode A — instant-recall only**: zero chat-LLM, only needs Groq Whisper API key (free, no credit card). Retrieval-only path. The recommended default for the project's stated thesis.
+- **Mode B — Groq full**: Groq Whisper + Groq Llama-3 chat for grounded fallback when retrieval misses. Free tier, single key.
+- **Mode C — bring your own key**: any OpenAI-compatible chat endpoint (OpenAI, DeepSeek, OpenRouter, Azure OpenAI, local vLLM, etc.) plus Groq Whisper.
+- **Mode D — fully offline**: local `faster-whisper` STT, no chat-LLM, no network, no API keys.
+
+## Bundled AI editor skills
+
+Two skills ship in [./skills/](./skills/) using a universal `SKILL.md` format that is consumed by both:
+
+1. AI editors (Cursor, Claude Code, Codex) for editing the user's knowledge base
+2. The runtime itself, via `runtime:` frontmatter hooks (`prompt-inject` for prompt enrichment, `data-source` for extending built-in tables)
+
+- [interview-knowledge-format](./skills/interview-knowledge-format/SKILL.md): teaches the AI editor to produce Markdown Q&A files with Unicode tree blocks, the schema the BM25 + embedding RAG indexer expects.
+- [homophone-detector](./skills/homophone-detector/SKILL.md): ships a TOML data file of homophones and STT hallucinations, merged at runtime into the built-in `PHONETIC_GROUPS` and `STT_HALLUCINATIONS` lists.
+
+## Cross-platform notes
+
+- **macOS**: requires BlackHole 2ch (or any other virtual loopback) for system-audio capture. Push-to-talk default is Right Option (avoids Siri's F5 conflict).
+- **Windows**: uses WASAPI loopback via `soundcard` (`pip install '.[windows]'`); no BlackHole equivalent needed.
+- **Linux**: uses PulseAudio `*.monitor` source automatically.
+
+## Network / proxy handling
+
+The `init` wizard and `ia doctor` both probe `groq.com` / `openai.com` reachability. If blocked, they auto-detect proxy settings via `scutil --proxy` (macOS), Windows registry, `gsettings` (Linux), and `HTTP_PROXY` env vars; if no system proxy is configured, they scan well-known local proxy ports (Clash 7890, Surge 6152, V2RayN 10809, Stash 7777, Privoxy 8118, Mihomo 7891) and offer to use the first one that responds. Designed for users in mainland China / behind corporate firewalls.
+
+## Project status
+
+- Active development on `main` branch.
+- Repository: https://github.com/XiaoChu-1208/interview-assistant-CLI
+- Issues / PRs welcome.
+
+## Optional
+
+- [skills/interview-knowledge-format/templates/example-qa.md](./skills/interview-knowledge-format/templates/example-qa.md): canonical example of the knowledge-base Markdown schema
+- [templates/knowledge.starter.md](./templates/knowledge.starter.md): starter knowledge file copied into new installs
+- [tests/test_smoke.py](./tests/test_smoke.py): smoke-test surface for module imports, i18n, STT filter, skills runtime hooks

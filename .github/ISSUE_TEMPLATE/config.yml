@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question / discussion
+    url: https://github.com/XiaoChu-1208/interview-assistant-CLI/discussions
+    about: Ask questions, share your knowledge-base layout, or discuss design choices.

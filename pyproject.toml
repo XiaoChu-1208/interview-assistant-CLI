@@ -11,8 +11,14 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "XiaoChu" }]
 keywords = [
-    "interview", "real-time-stt", "rag", "groq", "whisper",
-    "cli", "terminal", "cursor-skill", "claude-code-skill", "local-first",
+    "interview", "interview-assistant", "interview-helper", "interview-prep",
+    "real-time-stt", "speech-to-text", "asr", "whisper", "faster-whisper",
+    "rag", "bm25", "embeddings", "fastembed", "instant-recall",
+    "groq", "openai-compatible", "deepseek", "openrouter",
+    "cli", "terminal", "tui",
+    "agent-skill", "cursor", "cursor-skill", "claude-code", "claude-code-skill", "codex", "codex-skill",
+    "local-first", "offline-first", "knowledge-base", "markdown",
+    "push-to-talk", "ptt", "blackhole", "wasapi-loopback",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

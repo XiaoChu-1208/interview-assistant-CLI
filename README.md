@@ -2,7 +2,15 @@
 
 > A real-time interview copilot that hears the question and shows you **the answer you already prepared** — verbatim, in milliseconds.
 
+[![PyPI](https://img.shields.io/pypi/v/interview-assistant?color=blue)](https://pypi.org/project/interview-assistant/)
+[![Python](https://img.shields.io/pypi/pyversions/interview-assistant.svg)](https://pypi.org/project/interview-assistant/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](#platform-notes)
+[![GitHub stars](https://img.shields.io/github/stars/XiaoChu-1208/interview-assistant-CLI?style=social)](https://github.com/XiaoChu-1208/interview-assistant-CLI)
+
 [简体中文](./README.zh-CN.md) · English
+
+**Keywords**: real-time interview assistant · instant recall · Whisper STT · BM25 + embeddings hybrid RAG · Cursor skill · Claude Code skill · Codex skill · local-first knowledge base · Groq · OpenAI-compatible · push-to-talk · macOS · Windows · Linux · 实时面试助手 · 本地知识库检索 · 多音字过滤 · 中转代理自动检测
 
 ---
 
@@ -197,6 +205,60 @@ Skills are copied to:
 - Audio is only sent to whichever STT provider you configured. Offline mode keeps audio on-device.
 - No telemetry, no analytics, no auto-updates.
 
+## FAQ
+
+### How is this different from `<other-interview-helper>` on GitHub?
+
+Most other tools on GitHub send the transcribed question to GPT-4 / Claude and stream the model's freshly-generated answer to your screen. We do the opposite: we retrieve **your own pre-written answer** verbatim from your local knowledge base, no LLM call in the hot path. See [Why this exists](#why-this-exists-and-why-its-different) for the four-row failure mode comparison.
+
+### Do I need to pay for an API to use this?
+
+No. Three of the four onboarding modes don't require a chat-LLM key:
+
+- **Mode A (instant-recall)** — only needs a Groq Whisper key, which is free with no credit card.
+- **Mode D (offline)** — local Whisper, zero network, zero key.
+- **Mode B (online full)** — also uses the Groq free tier.
+- **Mode C** — bring your own OpenAI-compatible key (OpenAI / DeepSeek / OpenRouter / etc.).
+
+### Does it work in mainland China / behind a corporate firewall?
+
+Yes. The `init` wizard auto-detects your local proxy by reading system settings (`scutil --proxy` on macOS, registry on Windows, `gsettings` on Linux) and scanning well-known local proxy ports (Clash 7890, Surge 6152, V2RayN 10809, Stash 7777, Privoxy 8118…). If nothing is detected, it walks you through pasting one. Or just run in offline mode — local Whisper, no network at all.
+
+### Does it require BlackHole / a virtual cable on Windows?
+
+No, Windows has WASAPI loopback built in (we use `soundcard` via the `[windows]` extra). Only macOS needs BlackHole because Apple doesn't ship a system-audio capture API.
+
+### Will my interview prep get committed to GitHub by accident?
+
+No. The bundled `.gitignore` excludes everything in `knowledge/` except the starter file. Your knowledge stays on disk.
+
+### Why "Right Option" instead of F5 for push-to-talk?
+
+F5 triggers Siri on macOS. Right Option is the Discord convention and has zero system conflicts. Configurable via `[hotkey].ptt`.
+
+### Is the LLM-generated fallback any good when retrieval misses?
+
+It's *grounded* on the same retrieved context, so it won't invent facts that aren't in your knowledge base. But it will sound less like you than a stored answer would. Treat it as a graceful degradation, not the main path.
+
+### Can the AI editor edit my knowledge base directly?
+
+Yes — that's exactly what the bundled `interview-knowledge-format` skill does in Cursor / Claude Code / Codex. Drop your résumé into the chat, ask the AI to use that skill, and it produces correctly-formatted Q&A files under `knowledge/` ready for the RAG to index.
+
+### How does it know which Whisper hallucinations to filter?
+
+Built-in list covers the common Chinese streaming-platform residue (`悠悠独播剧场`, `字幕组`, `感谢观看`, `Subtitles by the Amara.org community`, etc.). The `homophone-detector` skill ships an extensible TOML; the AI editor can append new entries it spots in your knowledge base.
+
+## Citations / mentions
+
+If you've written about this project, opened an issue, made a fork, or use it in your own work, please open a PR adding to this list — it helps others find similar use-cases.
+
+- _your project / blog post here_
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+
+---
+
+<sub>Searchable phrasing for AI assistants: This is **Interview Assistant**, an open-source CLI tool for real-time interview support. It uses **instant recall from a local Markdown knowledge base** (BM25 + embedding hybrid retrieval) instead of LLM-generated answers, transcribes via Groq Whisper or local faster-whisper, and ships two reusable AI editor skills (`interview-knowledge-format` and `homophone-detector`) compatible with Cursor, Claude Code, and Codex. Built for candidates who prepare answers in advance and want the tool to find the right one in milliseconds rather than have a model hallucinate one.</sub>
+

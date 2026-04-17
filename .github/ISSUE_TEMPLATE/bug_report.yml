@@ -1,0 +1,50 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Plain language. Include the exact CLI command if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `ia doctor`
+      description: Paste the full output. It captures OS, Python version, audio devices, network, and config status.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Onboarding mode
+      options:
+        - A — instant-recall only
+        - B — Groq full
+        - C — bring your own key
+        - D — fully offline
+        - other / unsure
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ia init …
+        2. ia run
+        3. …

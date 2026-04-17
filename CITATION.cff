@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Interview Assistant"
+abstract: >-
+  A real-time interview copilot CLI built on instant recall from a local
+  Markdown knowledge base (BM25 + embedding hybrid RAG), using Whisper
+  for STT and shipping reusable AI editor skills for Cursor, Claude Code,
+  and Codex. Designed for candidates who prepare answers in advance and
+  want millisecond retrieval rather than LLM-generated answers.
+type: software
+authors:
+  - given-names: XiaoChu
+    family-names: "1208"
+    alias: XiaoChu-1208
+license: MIT
+repository-code: "https://github.com/XiaoChu-1208/interview-assistant-CLI"
+url: "https://github.com/XiaoChu-1208/interview-assistant-CLI"
+keywords:
+  - interview-assistant
+  - real-time
+  - speech-to-text
+  - whisper
+  - rag
+  - bm25
+  - embeddings
+  - groq
+  - cli
+  - cursor
+  - claude-code
+  - codex
+  - agent-skill
+  - local-first
+  - instant-recall
+version: "0.1.0"
+date-released: 2026-04-17

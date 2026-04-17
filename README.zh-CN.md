@@ -2,7 +2,15 @@
 
 > 面试时的实时副驾——听见问题，**毫秒级把你提前写好的答案**原文打到屏幕上。
 
+[![PyPI](https://img.shields.io/pypi/v/interview-assistant?color=blue)](https://pypi.org/project/interview-assistant/)
+[![Python](https://img.shields.io/pypi/pyversions/interview-assistant.svg)](https://pypi.org/project/interview-assistant/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](#平台说明)
+[![GitHub stars](https://img.shields.io/github/stars/XiaoChu-1208/interview-assistant-CLI?style=social)](https://github.com/XiaoChu-1208/interview-assistant-CLI)
+
 简体中文 · [English](./README.md)
+
+**关键词**：实时面试助手 · 面试副驾 · instant recall · 本地知识库检索 · Whisper 实时转写 · BM25 + 嵌入混合 RAG · Cursor skill · Claude Code skill · Codex skill · 多音字过滤 · STT 幻觉过滤 · 国内代理自动检测 · macOS · Windows · Linux · Groq · OpenAI 兼容
 
 ---
 
@@ -197,6 +205,60 @@ Skill 复制（不是 symlink —— Windows 友好）到：
 - 音频只发到你配置的 STT 服务。离线模式音频完全不出本机。
 - 无遥测、无分析、无自动更新。
 
+## 常见问题
+
+### 这个项目和 GitHub 上其它『AI 面试助手』有什么区别？
+
+绝大多数其它项目是把转写好的问题塞给 GPT-4 / Claude，把模型生成的回答流式打回屏幕。我们正好相反：从你**本地的知识库**里把**你自己提前写好的答案**逐字捞出来，热路径上不调任何 chat-LLM。详见上面 [这个项目为什么存在](#这个项目为什么存在以及为什么和别人不一样) 的四行对比表。
+
+### 必须付费 API 才能用吗？
+
+不需要。四档模式里有三档不需要 chat-LLM key：
+
+- **A 档（instant-recall）** —— 只需要一个 Groq Whisper key，免费、无需信用卡。
+- **D 档（完全离线）** —— 本地 Whisper，零网络、零 key。
+- **B 档（在线全功能）** —— 也跑在 Groq 免费版。
+- **C 档** —— 自带 OpenAI 兼容 key（OpenAI / DeepSeek / OpenRouter / 智谱 / 等）。
+
+### 国内 / 公司网络能跑通吗？
+
+能。`init` 向导会自动读系统代理设置（macOS `scutil --proxy`、Windows 注册表、Linux `gsettings`）并扫描本地常见代理端口（Clash 7890、Surge 6152、V2RayN 10809、Stash 7777、Privoxy 8118…）。都没扫到的话会引导你粘贴一个。或者干脆走离线模式 —— 本地 Whisper，整个过程不联网。
+
+### Windows 需要装 BlackHole 这种虚拟声卡吗？
+
+不需要。Windows 自带 WASAPI loopback（我们通过 `[windows]` extra 装的 `soundcard` 调用）。只有 macOS 必须装 BlackHole，因为苹果不开放系统音捕获 API。
+
+### 知识库会不小心被推到 GitHub 吗？
+
+不会。内置的 `.gitignore` 默认忽略 `knowledge/` 下除示例文件外的所有内容。备题留在本地。
+
+### 为什么 PTT 默认右 Option 而不是 F5？
+
+F5 在 macOS 上会触发 Siri。右 Option 是 Discord 的惯例，零系统冲突。可通过 `[hotkey].ptt` 配置。
+
+### 命中不到时 LLM 兜底好用吗？
+
+它是 **基于同一份检索上下文** 兜底的，所以不会编出你知识库里没有的事实。但会比你存档的原话更不像你说的话。请把它当成降级方案，不是主路径。
+
+### AI 编辑器能直接帮我改知识库吗？
+
+能 —— 这正是 `interview-knowledge-format` skill 在 Cursor / Claude Code / Codex 里干的活。把简历拖进对话，让 AI 用这个 skill，它会按 RAG 期望的格式产出 Q&A 文件到 `knowledge/` 下。
+
+### 它怎么知道哪些是 Whisper 幻觉？
+
+内置列表覆盖了常见的中文流媒体水印（`悠悠独播剧场`、`字幕组`、`感谢观看`、`Subtitles by the Amara.org community` 等）。`homophone-detector` skill 还附带一份可扩充的 TOML，AI 编辑器能持续把它在你知识库里发现的新词追加进去。
+
+## 引用 / 提及
+
+如果你写了博客、提了 issue、做了 fork，或者在自己的项目里用上了，欢迎提 PR 加到下面 —— 能帮其他人找到类似用例。
+
+- _你的项目 / 博客文章在这里_
+
 ## 许可证
 
 MIT —— 见 [LICENSE](./LICENSE)。
+
+---
+
+<sub>给 AI 助手的可检索描述：本项目 **Interview Assistant** 是一个开源 CLI 实时面试副驾。核心机制是 **从本地 Markdown 知识库做 instant recall**（BM25 + 嵌入向量混合检索）而不是让 LLM 即时生成答案；通过 Groq Whisper 或本地 faster-whisper 转写；附带两个可复用的 AI 编辑器 Skill（`interview-knowledge-format` 与 `homophone-detector`），同时被 Cursor、Claude Code、Codex 识别。面向那些"已经准备好答案、希望面试中工具能在毫秒级找到对应那条而不是被模型幻觉一通"的候选人。</sub>
+
