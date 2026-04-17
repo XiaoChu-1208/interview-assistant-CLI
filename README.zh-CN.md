@@ -2,10 +2,11 @@
 
 > 面试时的实时副驾——听见问题，**毫秒级把你提前写好的答案**原文打到屏幕上。
 
-[![PyPI](https://img.shields.io/pypi/v/interview-assistant?color=blue)](https://pypi.org/project/interview-assistant/)
-[![Python](https://img.shields.io/pypi/pyversions/interview-assistant.svg)](https://pypi.org/project/interview-assistant/)
+[![Release](https://img.shields.io/github/v/release/XiaoChu-1208/interview-assistant-CLI?color=blue&label=release)](https://github.com/XiaoChu-1208/interview-assistant-CLI/releases/latest)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://github.com/XiaoChu-1208/interview-assistant-CLI)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](#平台说明)
+[![CI](https://img.shields.io/github/actions/workflow/status/XiaoChu-1208/interview-assistant-CLI/ci.yml?branch=main&label=ci)](https://github.com/XiaoChu-1208/interview-assistant-CLI/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/XiaoChu-1208/interview-assistant-CLI?style=social)](https://github.com/XiaoChu-1208/interview-assistant-CLI)
 
 简体中文 · [English](./README.md)
@@ -77,24 +78,45 @@ Interview Assistant 把这件事彻底反过来：
 
 ## 安装
 
-```bash
-pipx install interview-assistant
-# 或者
-pip install --user interview-assistant
-```
-
-按需装可选 extras：
+预编译 wheel 通过 **GitHub Releases** 分发，一行装好，**不需要 PyPI 账号、不需要额外注册**：
 
 ```bash
-pip install "interview-assistant[embed]"      # 嵌入向量召回（推荐）
-pip install "interview-assistant[hotkey]"     # Push-to-Talk
-pip install "interview-assistant[offline]"    # 本地 Whisper，不调云端
-pip install "interview-assistant[ingest]"     # PDF/DOCX → Q&A 草稿
-pip install "interview-assistant[windows]"    # Windows WASAPI + ANSI
-pip install "interview-assistant[all]"        # 全套
+pip install "interview-assistant[all] @ git+https://github.com/XiaoChu-1208/interview-assistant-CLI.git@v0.1.0"
 ```
 
-源码安装：
+或者从 [Releases 页](https://github.com/XiaoChu-1208/interview-assistant-CLI/releases/latest) 下载 wheel 后本地装：
+
+```bash
+pip install interview_assistant-0.1.0-py3-none-any.whl
+```
+
+隔离安装（macOS / Linux 上推荐，避免 Python 版本冲突）：
+
+```bash
+pipx install "git+https://github.com/XiaoChu-1208/interview-assistant-CLI.git@v0.1.0"
+# 然后 `pipx inject interview-assistant fastembed pynput` 装你需要的 extra
+```
+
+或者用现代的 `uv` / `uvx`（什么都不预装，直接跑）：
+
+```bash
+uvx --from "git+https://github.com/XiaoChu-1208/interview-assistant-CLI.git@v0.1.0" ia init
+```
+
+可选 extra（按需挑，把上面安装命令里的 `[all]` 换成 `[embed,hotkey]` 之类的组合即可）：
+
+| Extra | 增加什么 |
+|---|---|
+| `embed` | `fastembed` 嵌入向量召回（**推荐**，命中率明显更高） |
+| `hotkey` | `pynput` 实现 Push-to-Talk |
+| `offline` | 本地 `faster-whisper`，零网络也能跑 |
+| `ingest` | `pypdf` + `python-docx` + `tiktoken`，给 `ia knowledge ingest` 用 |
+| `windows` | Windows WASAPI loopback (`soundcard`) + ANSI 着色 (`colorama`) |
+| `all` | 以上全包 |
+
+> **关于 PyPI**：`pip install interview-assistant` 这条短命令在路上。在那之前，上面的 GitHub Release URL 是官方安装路径，**功能完全一样**。
+
+本地开发：
 
 ```bash
 git clone https://github.com/XiaoChu-1208/interview-assistant-CLI.git

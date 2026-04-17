@@ -2,10 +2,11 @@
 
 > A real-time interview copilot that hears the question and shows you **the answer you already prepared** — verbatim, in milliseconds.
 
-[![PyPI](https://img.shields.io/pypi/v/interview-assistant?color=blue)](https://pypi.org/project/interview-assistant/)
-[![Python](https://img.shields.io/pypi/pyversions/interview-assistant.svg)](https://pypi.org/project/interview-assistant/)
+[![Release](https://img.shields.io/github/v/release/XiaoChu-1208/interview-assistant-CLI?color=blue&label=release)](https://github.com/XiaoChu-1208/interview-assistant-CLI/releases/latest)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://github.com/XiaoChu-1208/interview-assistant-CLI)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)](#platform-notes)
+[![CI](https://img.shields.io/github/actions/workflow/status/XiaoChu-1208/interview-assistant-CLI/ci.yml?branch=main&label=ci)](https://github.com/XiaoChu-1208/interview-assistant-CLI/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/XiaoChu-1208/interview-assistant-CLI?style=social)](https://github.com/XiaoChu-1208/interview-assistant-CLI)
 
 [简体中文](./README.zh-CN.md) · English
@@ -77,24 +78,45 @@ To make the prep itself manageable, the project ships with a Cursor / Claude Cod
 
 ## Install
 
-```bash
-pipx install interview-assistant
-# or
-pip install --user interview-assistant
-```
-
-Optional extras (pick what you need):
+Pre-built wheels are published as **GitHub Releases**, so you can install with a single command — no PyPI account, no extra registry:
 
 ```bash
-pip install "interview-assistant[embed]"      # dense-vector recall (recommended)
-pip install "interview-assistant[hotkey]"     # push-to-talk
-pip install "interview-assistant[offline]"    # local Whisper, no API
-pip install "interview-assistant[ingest]"     # PDF/DOCX → Q&A draft
-pip install "interview-assistant[windows]"    # WASAPI loopback + ANSI on Windows
-pip install "interview-assistant[all]"        # everything
+pip install "interview-assistant[all] @ git+https://github.com/XiaoChu-1208/interview-assistant-CLI.git@v0.1.0"
 ```
 
-From source:
+Or grab the wheel from the [Releases page](https://github.com/XiaoChu-1208/interview-assistant-CLI/releases/latest) and:
+
+```bash
+pip install interview_assistant-0.1.0-py3-none-any.whl
+```
+
+For an isolated install (recommended on macOS/Linux to avoid Python version clashes):
+
+```bash
+pipx install "git+https://github.com/XiaoChu-1208/interview-assistant-CLI.git@v0.1.0"
+# then `pipx inject interview-assistant fastembed pynput` for extras you need
+```
+
+Or with the modern `uv` / `uvx` (zero-install, runs straight from the repo):
+
+```bash
+uvx --from "git+https://github.com/XiaoChu-1208/interview-assistant-CLI.git@v0.1.0" ia init
+```
+
+Optional feature extras (pick what you need; combine with the install line above by changing `[all]` to e.g. `[embed,hotkey]`):
+
+| Extra | What it adds |
+|---|---|
+| `embed` | Dense-vector recall via `fastembed` (recommended — meaningfully better hit rate) |
+| `hotkey` | Push-to-talk via `pynput` |
+| `offline` | Local `faster-whisper` so you can run with zero network |
+| `ingest` | `pypdf` + `python-docx` + `tiktoken` for the `ia knowledge ingest` command |
+| `windows` | WASAPI loopback (`soundcard`) + ANSI colors (`colorama`) on Windows |
+| `all` | All of the above |
+
+> **PyPI**: a `pip install interview-assistant` shortcut is planned. Until that lands the GitHub-Release URL above is the official install path; functionally identical.
+
+For local development:
 
 ```bash
 git clone https://github.com/XiaoChu-1208/interview-assistant-CLI.git
