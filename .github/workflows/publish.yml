@@ -50,6 +50,11 @@ jobs:
   pypi:
     name: publish to PyPI
     needs: build
+    # Only attempt PyPI publishing if the repo opts in via a variable.
+    # To enable: Settings → Secrets and variables → Actions → Variables tab
+    # → New repository variable → Name: PUBLISH_TO_PYPI, Value: true
+    # Trusted Publisher must also be configured on PyPI side (see RELEASING.md).
+    if: vars.PUBLISH_TO_PYPI == 'true'
     runs-on: ubuntu-latest
     environment:
       name: pypi

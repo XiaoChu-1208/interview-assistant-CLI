@@ -28,6 +28,15 @@ The project name `interview-assistant` is published as a fresh project; PyPI wil
 2. Click **New environment**, name it exactly **`pypi`** (must match step 1).
 3. (Optional but recommended) Add a **required reviewer** (yourself), so a release can't go out without you clicking approve. This prevents accidental tag-pushes from publishing.
 
+### 3. Flip the publish switch on
+
+The publish workflow's `pypi` job is gated behind a repo variable, so PyPI uploads are opt-in (this prevents the "Failed to deploy to pypi" red X you'd otherwise see on every tag push when Trusted Publisher isn't set up yet).
+
+1. Go to <https://github.com/XiaoChu-1208/interview-assistant-CLI/settings/variables/actions>.
+2. Under the **Variables** tab, click **New repository variable**.
+3. Name: `PUBLISH_TO_PYPI`. Value: `true`.
+4. Save.
+
 That's it. From now on, pushing a `v*` tag will:
 1. Build sdist + wheel
 2. Verify bundled skills/templates/locales landed in the wheel
