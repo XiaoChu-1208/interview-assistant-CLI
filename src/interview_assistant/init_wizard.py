@@ -284,8 +284,9 @@ def _step_knowledge(cfg: dict) -> None:
 def _starter_template_path() -> Path | None:
     here = Path(__file__).parent
     for c in [
-        here.parent.parent / "templates" / "knowledge.starter.md",
+        here / "_bundled" / "templates" / "knowledge.starter.md",
         here.parent / "templates" / "knowledge.starter.md",
+        here.parent.parent / "templates" / "knowledge.starter.md",
         Path(os.sys.prefix) / "share" / "interview-assistant" / "templates" / "knowledge.starter.md",
     ]:
         if c.is_file():

@@ -65,14 +65,17 @@ ia = "interview_assistant.cli:main"
 [project.urls]
 Homepage = "https://github.com/XiaoChu-1208/interview-assistant-CLI"
 Repository = "https://github.com/XiaoChu-1208/interview-assistant-CLI"
+Documentation = "https://github.com/XiaoChu-1208/interview-assistant-CLI#readme"
 Issues = "https://github.com/XiaoChu-1208/interview-assistant-CLI/issues"
+Discussions = "https://github.com/XiaoChu-1208/interview-assistant-CLI/discussions"
+Changelog = "https://github.com/XiaoChu-1208/interview-assistant-CLI/releases"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/interview_assistant"]
 
-[tool.hatch.build.targets.wheel.shared-data]
-"skills" = "share/interview-assistant/skills"
-"templates" = "share/interview-assistant/templates"
+[tool.hatch.build.targets.wheel.force-include]
+"skills" = "interview_assistant/_bundled/skills"
+"templates" = "interview_assistant/_bundled/templates"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -82,4 +85,6 @@ include = [
     "README.md",
     "README.zh-CN.md",
     "LICENSE",
+    "CITATION.cff",
+    "llms.txt",
 ]

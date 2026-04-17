@@ -45,11 +45,19 @@ class Skill:
 
 
 def bundled_skills_dir() -> Path:
-    """Where the package ships its own skills."""
+    """Where the package ships its own skills.
+
+    Probe order:
+    1. `_bundled/skills/` next to this file (wheel install via force-include)
+    2. `../skills/` (legacy package-adjacent layout)
+    3. `../../skills/` (dev checkout: ship/skills/)
+    4. `<sys.prefix>/share/interview-assistant/skills/` (legacy shared-data)
+    """
     here = Path(__file__).parent
     candidates = [
-        here.parent.parent / "skills",
+        here / "_bundled" / "skills",
         here.parent / "skills",
+        here.parent.parent / "skills",
         Path(sys.prefix) / "share" / "interview-assistant" / "skills",
     ]
     for c in candidates:

@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.os }} · py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # Linux needs PortAudio for `sounddevice` to import; macOS/Windows ship it.
+      - name: Install PortAudio (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libportaudio2
+
+      - name: Install package
+        working-directory: ship
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+
+      - name: Smoke tests
+        working-directory: ship
+        run: python -m pytest -q tests/
+
+  build:
+    name: build sdist + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        working-directory: ship
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Verify bundled assets land in wheel
+        working-directory: ship
+        run: |
+          python -c "import zipfile, glob; \
+            w = glob.glob('dist/*.whl')[0]; \
+            names = zipfile.ZipFile(w).namelist(); \
+            need = [ \
+              '_bundled/skills/interview-knowledge-format/SKILL.md', \
+              '_bundled/skills/homophone-detector/SKILL.md', \
+              '_bundled/templates/knowledge.starter.md', \
+              'locales/zh-CN.yaml', \
+              'locales/en.yaml', \
+            ]; \
+            missing = [n for n in need if not any(n in x for x in names)]; \
+            assert not missing, f'missing in wheel: {missing}'; \
+            print('OK')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: ship/dist/
+          retention-days: 7

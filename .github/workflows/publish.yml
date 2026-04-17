@@ -1,0 +1,93 @@
+name: publish
+
+# Triggered by pushing a version tag like v0.1.0.
+# Builds sdist + wheel, then publishes to PyPI using OIDC Trusted Publishing.
+# No API token needed — see RELEASING.md for first-time setup.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build sdist + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        working-directory: ship
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Verify bundled assets land in wheel
+        working-directory: ship
+        run: |
+          python -c "import zipfile, glob; \
+            w = glob.glob('dist/*.whl')[0]; \
+            names = zipfile.ZipFile(w).namelist(); \
+            need = [ \
+              '_bundled/skills/interview-knowledge-format/SKILL.md', \
+              '_bundled/skills/homophone-detector/SKILL.md', \
+              '_bundled/templates/knowledge.starter.md', \
+              'locales/zh-CN.yaml', \
+              'locales/en.yaml', \
+            ]; \
+            missing = [n for n in need if not any(n in x for x in names)]; \
+            assert not missing, f'missing in wheel: {missing}'; \
+            print('OK')"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: ship/dist/
+
+  pypi:
+    name: publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/interview-assistant
+    permissions:
+      id-token: write   # required for Trusted Publisher OIDC
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          # No `password:` — OIDC handles auth.
+
+  github-release:
+    name: GitHub Release
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF##*/}"
+          gh release create "$TAG" dist/* \
+            --title "$TAG" \
+            --generate-notes
