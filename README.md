@@ -1,64 +1,92 @@
 # Interview Assistant
 
-> Real-time interview copilot. Hears the question, searches your local Markdown knowledge base, suggests a STAR-shaped answer in seconds.
+> A real-time interview copilot that hears the question and shows you **the answer you already prepared** — verbatim, in milliseconds.
 
 [简体中文](./README.zh-CN.md) · English
 
-A terminal-native, real-time interview copilot. It captures the interviewer's voice from system audio (and your own via push-to-talk), transcribes via Groq Whisper (or local `faster-whisper`), runs hybrid retrieval (BM25 + embeddings) against your local Markdown knowledge base.
+---
 
-The **core feature is *instant recall***: when the retrieved Q&A entry is a strong match, the assistant prints **your own pre-written answer verbatim** — predictable, no LLM hallucination, near-zero latency. You can run the entire app this way: STT only, no chat-LLM key needed.
+## Why this exists (and why it's different)
 
-If you want generated answers when there's no exact match, plug in any OpenAI-compatible chat endpoint (Groq / OpenAI / DeepSeek / OpenRouter / vLLM…). Knowledge stays **100% local**. The offline mode needs **no API key at all**.
+Most "AI interview helper" projects on GitHub do roughly the same thing: pipe the interviewer's audio into Whisper, paste the transcription into GPT-4 / Claude, and stream the model's freshly-generated answer back to the candidate.
+
+That approach **does not actually work in a real interview**, for four reasons:
+
+| Problem with LLM-only tools | What actually happens |
+|---|---|
+| **Latency** | 2–6 s for the first useful token. The interviewer is already onto follow-ups. |
+| **It's not your voice** | The LLM outputs polished generic English / Chinese; you sound like you're reading. Interviewers notice immediately. |
+| **Hallucination** | The LLM invents projects, metrics, team sizes, dates you don't actually have. You can't recover from "Wait, you said 23%, where's that number from?". |
+| **Per-question cost & rate limits** | Right when you most need 100% reliability, you hit a 429 or run out of credit. |
+
+### The Instant-Recall approach
+
+Interview Assistant inverts the design:
+
+> **You prepare the answers in advance. The tool's only job is to find the right one fast.**
+
+Concretely, in a live interview:
+
+1. Whisper transcribes the interviewer's question.
+2. Hybrid retrieval (BM25 + dense embeddings) finds the closest entry in **your local Markdown knowledge base** — which contains answers *you* wrote, in *your* voice, with *your* real numbers.
+3. If the match is strong, the assistant prints **your stored answer verbatim** — no LLM call, no rephrasing, no hallucination, often under 200 ms after the question ends.
+4. If the match is weak (and only then), it can optionally fall back to an LLM grounded on the same retrieved context — but this is the failure path, not the main path.
+
+The trade-off is honest: **you have to do the prep work**. There is no free lunch where an LLM gives you good interview answers about a life it doesn't know. What this tool gives you is *leverage on your prep*: your study time becomes a permanent searchable corpus, and the next interview reuses it instantly.
+
+To make the prep itself manageable, the project ships with a Cursor / Claude Code / Codex skill (`interview-knowledge-format`) that converts your résumé / past interview transcripts / job descriptions into the right Q&A format automatically.
 
 ---
 
-## Features
+## Highlights
 
-- **Instant recall as a first-class mode**: turn off the chat-LLM entirely; the app retrieves the closest Q&A from your knowledge base and prints *your* answer. No hallucination risk, no per-question token cost.
-- **Network-aware onboarding**: if Groq/OpenAI is unreachable (mainland China / corporate firewall), `init` detects your local Clash/Surge/V2Ray proxy automatically, or hand-holds you into pasting one.
-- **Real-time STT**: Groq Whisper (free tier, no credit card) or local `faster-whisper` for fully-offline use.
-- **Hybrid RAG**: BM25 + dense embeddings on your own Markdown knowledge base, with instant recall via question-hint indexing.
-- **Push-to-talk**: hold Right Option (`⌥`, default) to record into your mic; configurable to F8 / Right Cmd / Ctrl / F5.
-- **Provider-agnostic chat**: any OpenAI-compatible endpoint — Groq, OpenAI, OpenRouter, DeepSeek, smart proxies, local vLLM, etc.
-- **Two reusable Skills** (work in Cursor, Claude Code, Codex):
-  - `interview-knowledge-format` — converts résumés / past interviews into retrieval-friendly Q&A files.
-  - `homophone-detector` — catches polyphones and ASR ambiguities, plus a self-extending hallucination filter.
-- **Bilingual UI** — switch between 中文 / English at first launch.
-- **5-minute onboarding** — a single `init` wizard handles language, provider, skills, sample knowledge base, and audio setup.
+### Primary
+
+- **Instant Recall is a first-class mode.** You can run the entire app with the chat-LLM completely disabled. Whisper + your knowledge base. That's it. No hallucination surface area, no per-token cost, no API outage to worry about mid-interview.
+- **Your answers, verbatim.** The retrieval layer is tuned to *prefer printing your stored text exactly* over rewriting it. You hear what you wrote. You sound like yourself.
+- **Predictable latency.** Sub-second from end-of-question to on-screen answer when the recall hits — there is no streaming token-by-token from a remote API in the critical path.
+
+### Secondary
+
+- **Hybrid retrieval + Q-hint instant recall.** BM25 + dense embeddings (FastEmbed `bge-small-zh-v1.5`) with Reciprocal Rank Fusion. A separate question-hint index gives O(1)-feeling recall on questions that semantically match a stored Q.
+- **Two reusable Skills (Cursor / Claude Code / Codex compatible).**
+  - `interview-knowledge-format` — turns résumés / JDs / past prep notes into properly-structured Q&A files (with optional Unicode `tree` cheat-sheet blocks). Loaded as a runtime `prompt-inject` hook so any AI editor stays format-aware while you edit.
+  - `homophone-detector` — extends the homophone table (`RAG/LAG`, `KPI/KBI`, 重 zhòng/chóng, 还 hái/huán…) and the STT hallucination filter (`悠悠独播剧场`, `字幕组`, `Subtitles by the Amara.org community`…). Loaded as a `data-source` hook; the AI editor can append new entries it spots in your knowledge base.
+- **STT hallucination filter built in.** Whisper periodically blurts streaming-platform watermarks during silences; we drop them silently. List is extensible via skill or `[stt_filter].extra_hallucinations` config.
+- **Network-aware onboarding for users behind GFW / corporate firewalls.** `init` probes connectivity, then auto-detects your local proxy by reading system network preferences (`scutil --proxy` on macOS, registry on Windows, `gsettings` on Linux) **and** scanning well-known local proxy ports (Clash 7890, Surge 6152, V2RayN 10809, Stash 7777, Privoxy 8118…). One Y/N to apply.
+- **Provider-agnostic chat (when you do want LLM fallback).** Any OpenAI-compatible endpoint: Groq, OpenAI, OpenRouter, DeepSeek, n1n, Azure, local vLLM. Optional fallback endpoint kicks in on 429/503.
+- **Push-to-Talk that doesn't fight the OS.** Default `Right Option` (Discord-style — no system conflict on macOS). Configurable to F8 / Right Cmd / Right Ctrl / F5; the wizard warns when you pick F5 on macOS (Siri).
+- **Cross-platform audio capture abstraction.** macOS BlackHole / Windows WASAPI loopback / Linux PulseAudio `*.monitor`, behind one `find_loopback()` API. Microphone discovery skips virtual devices.
+- **Bilingual UI** — 中文 / English, picked at first launch, persisted; tiny YAML-driven `i18n.t()` with English fallback.
+- **Knowledge base CLI workflow.** `knowledge new` (interactive entry), `knowledge ingest` (PDF / DOCX / MD → draft Q&A with token-cost estimate before you spend money, written to `draft_*.md` so you have to review before it's used), `knowledge validate`, `knowledge status`, `ask` (dry-run a single question without audio).
+- **Local-first privacy.** All knowledge files stay on disk. Default `.gitignore` ignores everything in `knowledge/` except the starter, so you don't accidentally commit your prep to GitHub. No telemetry, no analytics.
+- **Doctor with `--fix`.** `interview-assistant doctor --fix` runs the same checks as `init` and tries to repair what it can (e.g. `brew install blackhole-2ch`, `apt install portaudio19-dev`).
+- **Tree-block rendering.** Stored ` ```tree ` blocks in your answers get colored and indented in the terminal so a glance is enough during the interview.
+- **Skill installer.** `interview-assistant skills install/list/upgrade/uninstall` copies (not symlinks — Windows-safe) the bundled skills into the right editor directories (`./.cursor/skills/`, `./.claude/skills/`, project or user level).
+- **Configurable everywhere.** Single TOML at `~/.config/interview-assistant/config.toml`, every key overridable via `IA_*` env vars.
+
+---
 
 ## Install
 
-### Recommended (PyPI)
-
 ```bash
 pipx install interview-assistant
-# or, if you don't have pipx:
+# or
 pip install --user interview-assistant
 ```
 
-Platform extras:
+Optional extras (pick what you need):
 
 ```bash
-# Windows: gives you WASAPI loopback for system audio + ANSI colors
-pip install "interview-assistant[windows]"
-
-# Add embeddings (better RAG, ~30MB model download on first use)
-pip install "interview-assistant[embed]"
-
-# Add push-to-talk hotkey support
-pip install "interview-assistant[hotkey]"
-
-# Add fully-offline mode (local Whisper)
-pip install "interview-assistant[offline]"
-
-# Add knowledge ingest (PDF/DOCX → Q&A)
-pip install "interview-assistant[ingest]"
-
-# Everything
-pip install "interview-assistant[all]"
+pip install "interview-assistant[embed]"      # dense-vector recall (recommended)
+pip install "interview-assistant[hotkey]"     # push-to-talk
+pip install "interview-assistant[offline]"    # local Whisper, no API
+pip install "interview-assistant[ingest]"     # PDF/DOCX → Q&A draft
+pip install "interview-assistant[windows]"    # WASAPI loopback + ANSI on Windows
+pip install "interview-assistant[all]"        # everything
 ```
 
-### From source
+From source:
 
 ```bash
 git clone https://github.com/XiaoChu-1208/interview-assistant-CLI.git
@@ -72,107 +100,102 @@ pip install -e ".[all]"
 interview-assistant init
 ```
 
-The wizard will:
+The wizard walks you through:
 
-1. **Ask your language** — 中文 or English.
-2. **Pick a mode**:
-   - **A) Instant-recall only** *(recommended if you've prepped answers)* — Whisper STT + your local Q&A. NO chat-LLM call ever. You only need a Groq Whisper key, or run Whisper locally.
-   - **B) Online full** — Groq Whisper + Groq Llama-3.3 (free tier).
+1. **Language** — 中文 or English.
+2. **Mode** — pick one:
+   - **A) Instant-recall only** *(recommended)* — Whisper STT + your local Q&A. NO chat-LLM call, ever. You only need a Groq Whisper key (free, no credit card) or local Whisper.
+   - **B) Online full** — Groq Whisper + Groq Llama-3.3 free tier.
    - **C) Bring-your-own key** — any OpenAI-compatible chat endpoint.
-   - **D) Fully offline** — local Whisper, no LLM.
-3. **Auto-detect environment issues** — missing audio backend, packages, permissions; offers to fix what it can.
-4. **Network check + proxy auto-detect** — if Groq/OpenAI is blocked from your network, the wizard scans for a local proxy (Clash 7890, Surge 6152, V2RayN 10809…), reads system proxy settings, and walks you through pasting one if needed.
-5. **Set up STT / chat** — keys, models, connectivity test.
-6. **Drop a sample knowledge base** into `./knowledge/00_starter.md`.
-7. **Install the two skills** into your editor (Cursor / Claude Code / Codex).
-8. **Verify audio devices**.
+   - **D) Fully offline** — local Whisper, no LLM at all.
+3. **Environment self-check + auto-fix** — missing audio backend, packages, permissions.
+4. **Network probe + proxy auto-detect** — for users behind GFW or corporate firewalls.
+5. **STT / chat keys + connectivity test.**
+6. **Sample knowledge base** copied to `./knowledge/00_starter.md`.
+7. **Skill install** to detected AI editors (Cursor / Claude Code / Codex).
+8. **Audio device verification.**
 
 Then:
 
 ```bash
 interview-assistant            # start the assistant
 interview-assistant doctor     # re-run diagnostics
-interview-assistant doctor --fix    # auto-fix what it can
+interview-assistant doctor --fix
+interview-assistant ask "tell me about yourself"   # dry-run
 ```
 
 ## Building your knowledge base
 
-Three paths, pick one:
+Three paths:
 
 ### A. AI editor (recommended, fastest)
 
-1. Open this project in **Cursor** or **Claude Code**.
-2. Drop your résumé / job description / past interview notes into the chat.
-3. Say:
-   > Use the `interview-knowledge-format` skill. Turn this into Q&A files
-   > under `knowledge/`, one per topic.
+Open this folder in Cursor / Claude Code, drop your résumé / JD into the chat, and say:
 
-The AI will produce properly-formatted MD files with Unicode tree blocks and the Q&A structure the RAG expects.
+> Use the `interview-knowledge-format` skill. Turn this into Q&A files under `knowledge/`, one per topic.
+
+The bundled skill instructs the AI to emit files in the exact format the RAG expects — proper headings, `Q:` / `A:` markers, optional `tree` blocks, `[需补充]` placeholders for missing data instead of inventions.
 
 ### B. CLI
 
 ```bash
-interview-assistant knowledge new                # interactive Q&A entry
-interview-assistant knowledge ingest resume.pdf  # PDF/DOCX/MD/TXT → draft Q&A
-interview-assistant knowledge validate           # check format
-interview-assistant knowledge status             # see what's approved/draft/invalid
-interview-assistant ask "tell me about yourself" # dry-run a single question
+interview-assistant knowledge new                  # interactive Q&A entry
+interview-assistant knowledge ingest resume.pdf    # PDF/DOCX/MD/TXT → draft_*.md
+interview-assistant knowledge validate
+interview-assistant knowledge status
 ```
+
+`ingest` always writes to `draft_*.md` and shows a token-cost estimate before spending anything.
 
 ### C. Hand-write
 
-Copy `knowledge/00_starter.md` and edit. The `interview-knowledge-format` skill describes the format in detail.
+Copy `knowledge/00_starter.md` and edit. The `interview-knowledge-format` skill describes the format in full.
 
 ## Hotkeys (live mode)
 
 | Key / command | Action |
 |---|---|
-| Hold `⌥` (Right Option) | Push-to-talk into your mic |
+| Hold `⌥` (Right Option, default) | Push-to-talk into your mic |
 | `listen` | Toggle system-audio listener (the interviewer side) |
 | `off` | Stop the listener |
 | `/search <kw>` | Search the knowledge base |
 | `/reload` | Reload knowledge after editing MD files |
 | `q` / `quit` / `exit` | Quit |
 
-PTT key is configurable — see `[hotkey].ptt` in `~/.config/interview-assistant/config.toml`. Avoid `f5` on macOS (triggers Siri).
+PTT is configurable via `[hotkey].ptt` in `~/.config/interview-assistant/config.toml`. Avoid `f5` on macOS (Siri).
 
-## Skill installation
+## Skill management
 
 ```bash
-interview-assistant skills install               # install both skills to detected editors
+interview-assistant skills install               # install both skills
 interview-assistant skills list                  # see what's installed and where
-interview-assistant skills upgrade               # bump to bundled latest
-interview-assistant skills uninstall <name>      # remove
+interview-assistant skills upgrade
+interview-assistant skills uninstall <name>
 ```
 
-Skills are copied (not symlinked) to:
+Skills are copied to:
 
 | Editor | Project-level | User-level |
 |---|---|---|
 | Cursor | `./.cursor/skills/<name>/` | `~/.cursor/skills/<name>/` |
 | Claude Code | `./.claude/skills/<name>/` | `~/.claude/skills/<name>/` |
-| Codex / generic | appended to `./AGENTS.md` | — |
-
-## Configuration
-
-Stored at `~/.config/interview-assistant/config.toml` (Linux/macOS) or `%APPDATA%\interview-assistant\config.toml` (Windows). Override any field via `IA_*` environment variables.
+| Codex / generic | `./AGENTS.md` | — |
 
 ## Platform notes
 
 | Platform | System audio | Microphone | PTT | Notes |
 |---|---|---|---|---|
-| **macOS** | install [BlackHole](https://github.com/ExistentialAudio/BlackHole) + create Multi-Output Device | works out of box | grant Accessibility for your terminal | F5 conflicts with Siri — default is `⌥` |
-| **Windows** | works out of box (WASAPI loopback via `[windows]` extra) | works | works | no virtual cable required |
-| **Linux** | PulseAudio `*.monitor` device | works | X11 only (Wayland disables global hotkeys) | needs `apt install portaudio19-dev` |
+| **macOS** | install [BlackHole](https://github.com/ExistentialAudio/BlackHole) + Multi-Output Device | works | grant Accessibility for terminal | F5 conflicts with Siri — default is `⌥` |
+| **Windows** | works (WASAPI loopback via `[windows]` extra) | works | works | no virtual cable required |
+| **Linux** | PulseAudio `*.monitor` | works | X11 only (Wayland disables global hotkeys) | needs `apt install portaudio19-dev` |
 
-`interview-assistant doctor` walks through all of this.
+`interview-assistant doctor` walks all of this.
 
 ## Privacy
 
-- Knowledge base files stay on disk. The `.gitignore` ignores everything in `knowledge/` except the starter file.
-- Audio is only sent to the STT provider you configured (Groq by default; or local in offline mode).
-- Question + retrieved context is sent to your chat LLM provider.
-- No telemetry, no analytics.
+- All knowledge files stay on disk. `.gitignore` ignores `knowledge/*` except the starter — you cannot accidentally commit your prep to GitHub.
+- Audio is only sent to whichever STT provider you configured. Offline mode keeps audio on-device.
+- No telemetry, no analytics, no auto-updates.
 
 ## License
 
